@@ -1,0 +1,172 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="d-flex align-items-center justify-content-between">
+      <h4>Device List</h4>
+      <button class="btn btn-primary" (click)="addDevice()">Add Device</button>
+    </div>
+  </div>
+  <div class="row mt-1">
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Model</th>
+                <th>Controler</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let el of deviceData">
+                <td>{{ el.deviceId }}</td>
+                <td>{{ el.deviceName }}</td>
+                <td>{{ el.deviceType }}</td>
+                <td>{{ el.deviceModal }}</td>
+                <td>{{ el.deviceController }}</td>
+                <td>
+                  <a
+                    href="javascript:void(0)"
+                    class="action-icon text-success me-3"
+                    title="Edit"
+                    aria-label="Edit"
+                  >
+                    <i class="fa fa-pencil" (click)="editDevice(el)"></i>
+                  </a>
+
+                  <a
+                    href="javascript:void(0)"
+                    class="action-icon text-danger"
+                    title="Delete"
+                    aria-label="Delete"
+                  >
+                    <i class="fa fa-trash" (click)="opendeleteDevice(el.deviceId)"></i>
+                  </a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #deviceTemplate let-modal>
+  <div class="model-header d-flex justify-content-between align-items-center p-3">
+    <h5 class="modal-title">{{action}} Device</h5>
+    <button
+      type="button"
+      class="btn-close"
+      aria-label="Close"
+      (click)="cancel()"
+    >
+    </button>
+  </div>
+  <div class="modal-body">
+    <form (ngSubmit)="saveData()" [formGroup]="deviceForm">
+        <div class="row">
+           <div class="form-group  col-md-6 mt-1">
+                <label for="deviceId">Device ID</label>
+                <input type="text" class="form-control" formControlName="deviceId" placeholder="Device ID" [ngClass]="{'is-invalid':deviceForm.get('deviceId')?.hasError('required') && (deviceForm.get('deviceId')?.touched || submit)}" >
+                <span class="invalid-feedback" *ngIf="deviceForm.get('deviceId')?.hasError('required') && (deviceForm.get('deviceId')?.touched || submit)">Device Id is Mandatory</span>
+            </div>
+            <div class="form-group  col-md-6  mt-1">
+                <label for="deviceName">Name</label>
+                <input type="text" class="form-control" formControlName="deviceName" placeholder="Device Name" [ngClass]="{'is-invalid':deviceForm.get('deviceName')?.hasError('required') && (deviceForm.get('deviceName')?.touched || submit)}" >
+                <span class="invalid-feedback" *ngIf="deviceForm.get('deviceName')?.hasError('required') && (deviceForm.get('deviceName')?.touched || submit)">Device Name is Mandatory</span>
+              </div>
+            <div class="form-group col-md-6  mt-1">
+              <label for="deviceType">Type</label>
+              <select class="form-control" name="deviceType" id="deviceType" formControlName="deviceType" [ngClass]="{'is-invalid':deviceForm.get('deviceType')?.hasError('required') && (deviceForm.get('deviceType')?.touched || submit)}">
+                <option value="CNC">CNC</option>
+                <option value="VMC">VMC</option>
+              </select>
+              <span class="invalid-feedback" *ngIf="deviceForm.get('deviceType')?.hasError('required') && (deviceForm.get('deviceType')?.touched || submit)">Device Type is Mandatory</span>
+            </div>
+            <div class="form-group col-md-6  mt-1">
+              <label for="deviceController">Controler</label>
+              <input class="form-control" type="text" formControlName="deviceController" placeholder="Device Controler" [ngClass]="{'is-invalid':deviceForm.get('deviceController')?.hasError('required') && (deviceForm.get('deviceController')?.touched || submit)}">
+              <span class="invalid-feedback" *ngIf="deviceForm.get('deviceController')?.hasError('required') && (deviceForm.get('deviceController')?.touched || submit)">Device Controller is Mandatory</span>
+            </div>
+            <div class="form-group col-md-6  mt-1">
+              <label for="deviceManufacture">Manufacture</label>
+              <select class="form-control" name="deviceManufacture" id="deviceManufacture" formControlName="deviceManufacture" [ngClass]="{'is-invalid':deviceForm.get('deviceManufacture')?.hasError('required') && (deviceForm.get('deviceManufacture')?.touched || submit)}">
+                <option value="Wimera-K2">Wimera-K2</option>
+              </select>
+              <span class="invalid-feedback" *ngIf="deviceForm.get('deviceManufacture')?.hasError('required') && (deviceForm.get('deviceManufacture')?.touched || submit)">Device Manufacture is Mandatory</span>
+            </div>
+            <div class="form-group col-md-6  mt-1">
+              <label for="deviceModal">Modal</label>
+              <select class="form-control" name="deviceModal" id="deviceModal" formControlName="deviceModal" [ngClass]="{'is-invalid':deviceForm.get('deviceModal')?.hasError('required') && (deviceForm.get('deviceModal')?.touched || submit)}">
+                <option value="Wim-1010">Wim-1010</option>
+              </select>
+              <span class="invalid-feedback" *ngIf="deviceForm.get('deviceModal')?.hasError('required') && (deviceForm.get('deviceModal')?.touched || submit)">Device Modal is Mandatory</span>
+            </div>
+            <div class="form-group col-md-6  mt-1">
+              <label for="deviceFrequency">Frequency</label>
+              <select class="form-control" name="deviceFrequency" id="deviceFrequency" formControlName="deviceFrequency" [ngClass]="{'is-invalid':deviceForm.get('deviceFrequency')?.hasError('required') && (deviceForm.get('deviceFrequency')?.touched || submit)}">
+                <option value="50Hz">50Hz</option>
+                <option value="60Hz">60Hz</option>
+              </select>
+              <span class="invalid-feedback" *ngIf="deviceForm.get('deviceFrequency')?.hasError('required') && (deviceForm.get('deviceFrequency')?.touched || submit)">Device Frequency is Mandatory</span>
+            </div>
+             <div class="form-group col-md-6  mt-1">
+              <label for="devicephaseSequence">Phase</label>
+              <select class="form-control" name="devicephaseSequence" id="devicephaseSequence" formControlName="devicephaseSequence" [ngClass]="{'is-invalid':deviceForm.get('devicephaseSequence')?.hasError('required') && (deviceForm.get('devicephaseSequence')?.touched || submit)}">
+                <option value="1P2W">1P2W</option>
+                <option value="2P3W">2P3W</option>
+                <option value="3P3W">3P3W</option>
+                <option value="3P4W">3P4W</option>
+
+              </select>
+              <span class="invalid-feedback" *ngIf="deviceForm.get('devicephaseSequence')?.hasError('required') && (deviceForm.get('devicephaseSequence')?.touched || submit)">Device Phase is Mandatory</span>
+            </div>
+            
+            <div class="form-group col-md-6  mt-1">
+              <label for="devicepgaGainConfig">PGA Config</label>
+              <select class="form-control" name="devicepgaGainConfig" id="devicepgaGainConfig" formControlName="devicepgaGainConfig" [ngClass]="{'is-invalid':deviceForm.get('devicepgaGainConfig')?.hasError('required') && (deviceForm.get('devicepgaGainConfig')?.touched || submit)}">
+                <option value="21845">21845</option>
+              </select>
+              <span class="invalid-feedback" *ngIf="deviceForm.get('devicepgaGainConfig')?.hasError('required') && (deviceForm.get('devicepgaGainConfig')?.touched || submit)">Device PGA Gain is Mandatory</span>
+            </div>
+             <div class="form-group col-md-6  mt-1">
+              <label for="deviceMode">Mode</label>
+              <select class="form-control" name="deviceMode" id="deviceMode" formControlName="deviceMode" [ngClass]="{'is-invalid':deviceForm.get('deviceMode')?.hasError('required') && (deviceForm.get('deviceMode')?.touched || submit)}">
+                <option value="DIGITAL">DIGITAL</option>
+                <option value="AI">AI</option>
+              </select>
+              <span class="invalid-feedback" *ngIf="deviceForm.get('deviceMode')?.hasError('required') && (deviceForm.get('deviceMode')?.touched || submit)">Device PGA Gain is Mandatory</span>
+            </div>
+            <div class="form-group d-flex justify-content-between mt-2">
+              <button class="btn btn-success" type="submit">Save</button>
+              <button class="btn btn-danger" type="reset" (click)="cancel()">Cancel</button>
+            </div>
+
+        </div>
+    </form>
+  </div>
+</ng-template>
+
+<ng-template #devicedeleteTemplate let-modal>
+  <div class="model-header d-flex justify-content-between align-items-center p-3">
+    <h5 class="modal-title">Delete Device</h5>
+    <button
+      type="button"
+      class="btn-close"
+      aria-label="Close"
+      (click)="modal.close()"
+    >
+    </button>
+  </div>
+  <div class="modal-body">
+    <p>Are You sure to delete this Device</p>
+    <div class="form-group d-flex justify-content-between">
+      <button class="btn btn-danger" type="button" (click)="deleteDevice()">Delete</button>
+      <button class="btn btn-success" type="button" (click)="modal.close()">Cancel</button>
+    </div>
+  </div>
+</ng-template>

@@ -1,0 +1,29 @@
+<div class="login-wrapper">
+  <div class="login-card">
+    <h2>Welcome Back 👋</h2>
+    <p class="subtitle">Login to continue</p>
+
+    <form (ngSubmit)="saveData()" [formGroup]="loginForm">
+
+      <div class="form-control">
+        <label for="email">E-Mail</label>
+        <input type="email" name="email" id="email" formControlName="email">
+        <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="error">
+          <p>Enter the E-mail</p>
+        </div>
+      </div>
+
+      <div class="form-control">
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" formControlName="password">
+        <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="error">
+          <p>Enter the Password</p>
+        </div>
+      </div>
+
+      <button [disabled]="loginForm.invalid" type="submit" class="btn-primary">Login</button>
+
+      <p *ngIf="errorMessage" class="error-text">{{ errorMessage }}</p>
+    </form>
+  </div>
+</div>

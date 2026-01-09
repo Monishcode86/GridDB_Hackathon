@@ -1,0 +1,58 @@
+<nav class="navbar navbar-light fixed-top px-3">
+    <button class="menu-btn me-2" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="flex-grow-1"></div>
+
+    <div class="logout d-flex align-items-center" (click)="logout()">
+        <i class="fas fa-user-circle fa-lg me-2"></i>
+        <span class="d-none d-md-inline">Logout</span>
+    </div>
+</nav>
+
+<div class="sidebar-overlay" *ngIf="isMobile && sidebarVisible" (click)="sidebarVisible = false"></div>
+
+<div class="layout">
+    <nav class="sidebar" [class.collapsed]="isCollapsed && !isMobile" [class.mobile-show]="isMobile && sidebarVisible">
+        <ul class="nav flex-column">
+            <li class="nav-item" *ngFor="let item of menuItems; let i = index" (mouseenter)="onHoverMenu(i)"
+                (mouseleave)="onHoverMenu(null)">
+                <a class="nav-link" [routerLink]="!item.submenu ? item.route : null" routerLinkActive="active"
+                    [routerLinkActiveOptions]="{ exact: !item.submenu }"
+                    (click)="item.submenu ? toggleSubmenu(i) : selectMenu(i)">
+                    <i class="{{ item.icon }}"></i>
+                    <span *ngIf="!isCollapsed || isMobile">{{ item.label }}</span>
+
+                    <i *ngIf="item.submenu && (!isCollapsed || isMobile)" class="fas ms-auto" [ngClass]="
+              openSubmenuIndex === i ? 'fa-chevron-up' : 'fa-chevron-down'
+            "></i>
+                </a>
+
+                <ul class="submenu" *ngIf="
+            item.submenu && openSubmenuIndex === i && (!isCollapsed || isMobile)
+          ">
+                    <li *ngFor="let sub of item.submenu">
+                        <a class="nav-link" [routerLink]="sub.route" routerLinkActive="active"
+                            [routerLinkActiveOptions]="{ exact: true }" (click)="selectSubmenu()">
+                            {{ sub.label }}
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="hover-submenu" *ngIf="
+            isCollapsed && !isMobile && hoverMenuIndex === i && item.submenu
+          ">
+                    <a *ngFor="let sub of item.submenu" class="nav-link" [routerLink]="sub.route"
+                        routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="selectSubmenu()">
+                        {{ sub.label }}
+                    </a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <main class="content">
+        <router-outlet></router-outlet>
+    </main>
+</div>
