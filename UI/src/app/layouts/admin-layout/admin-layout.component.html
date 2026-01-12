@@ -1,15 +1,36 @@
-<nav class="navbar navbar-light fixed-top px-3">
+<!-- <nav class="navbar navbar-light fixed-top px-3">
     <button class="menu-btn me-2" (click)="toggleSidebar()">
-        <i class="fas fa-bars"></i>
+             <mat-icon>menu</mat-icon>
     </button>
 
     <div class="flex-grow-1"></div>
 
     <div class="logout d-flex align-items-center" (click)="logout()">
-        <i class="fas fa-user-circle fa-lg me-2"></i>
+           <mat-icon class="me-2">account_circle</mat-icon>
         <span class="d-none d-md-inline">Logout</span>
     </div>
+</nav> -->
+<nav class="navbar navbar-light fixed-top px-3 d-flex align-items-center justify-content-between flex-nowrap">
+  <!-- Menu Button + Logo -->
+  <div class="d-flex align-items-center">
+    <img src="{{ sidebarOpen && !sidebarVisible ? 'WinLogo.png' : 'favLogo.png' }}"
+         style="cursor: pointer;" 
+         alt="Company Logo" 
+         class="company-logo me-3"  
+         (click)="toggleSidebar()" />
+  </div>
+
+  <!-- Date/Time + Logout -->
+  <div class="d-flex align-items-center flex-nowrap">
+    <span class="me-3 text-nowrap">{{ currentDateTime | date:'medium' }}</span>
+    <div class="logout d-flex align-items-center" (click)="logout()">
+      <mat-icon class="me-2">account_circle</mat-icon>
+      <span class="d-none d-md-inline">Logout</span>
+    </div>
+  </div>
 </nav>
+
+
 
 <div class="sidebar-overlay" *ngIf="isMobile && sidebarVisible" (click)="sidebarVisible = false"></div>
 
@@ -21,12 +42,11 @@
                 <a class="nav-link" [routerLink]="!item.submenu ? item.route : null" routerLinkActive="active"
                     [routerLinkActiveOptions]="{ exact: !item.submenu }"
                     (click)="item.submenu ? toggleSubmenu(i) : selectMenu(i)">
-                    <i class="{{ item.icon }}"></i>
+                     <mat-icon>{{item.icon}}</mat-icon>
                     <span *ngIf="!isCollapsed || isMobile">{{ item.label }}</span>
-
-                    <i *ngIf="item.submenu && (!isCollapsed || isMobile)" class="fas ms-auto" [ngClass]="
-              openSubmenuIndex === i ? 'fa-chevron-up' : 'fa-chevron-down'
-            "></i>
+               <mat-icon *ngIf="item.submenu && (!isCollapsed || isMobile)" class="ms-auto">
+                        {{ openSubmenuIndex === i ? 'expand_less' : 'expand_more' }}
+                    </mat-icon>
                 </a>
 
                 <ul class="submenu" *ngIf="

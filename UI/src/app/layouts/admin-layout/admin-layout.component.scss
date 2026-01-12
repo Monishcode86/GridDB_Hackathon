@@ -14,10 +14,15 @@
 }
 
 .navbar {
+   position: fixed;       /* Keep navbar on top */
+  top: 0;
+  left: 0;
+  right: 0;
   height: 56px;
-   background: var(--sidebar-bg);
+  background: var(--sidebar-bg);
+  background-color:  #EEEEEE;
   border-bottom: 1px solid var(--border-color);
-  z-index: 1100;
+  z-index: 9999;
 }
 
 .menu-btn {
@@ -153,7 +158,7 @@
 .sidebar-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  // background: rgba(0, 0, 0, 0.4);
   z-index: 1040;
 }
 
@@ -186,3 +191,9 @@
   background: var(--primary);
 
 }
+.company-logo {
+  height: 40px;
+  width: auto;
+}
+
+
