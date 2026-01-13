@@ -1,17 +1,4 @@
-<!-- <nav class="navbar navbar-light fixed-top px-3">
-    <button class="menu-btn me-2" (click)="toggleSidebar()">
-             <mat-icon>menu</mat-icon>
-    </button>
-
-    <div class="flex-grow-1"></div>
-
-    <div class="logout d-flex align-items-center" (click)="logout()">
-           <mat-icon class="me-2">account_circle</mat-icon>
-        <span class="d-none d-md-inline">Logout</span>
-    </div>
-</nav> -->
 <nav class="navbar navbar-light fixed-top px-3 d-flex align-items-center justify-content-between flex-nowrap">
-  <!-- Menu Button + Logo -->
   <div class="d-flex align-items-center">
     <img src="{{ sidebarOpen && !sidebarVisible ? 'WinLogo.png' : 'favLogo.png' }}"
          style="cursor: pointer;" 
@@ -20,7 +7,6 @@
          (click)="toggleSidebar()" />
   </div>
 
-  <!-- Date/Time + Logout -->
   <div class="d-flex align-items-center flex-nowrap">
     <span class="me-3 text-nowrap">{{ currentDateTime | date:'medium' }}</span>
     <div class="logout d-flex align-items-center" (click)="logout()">
