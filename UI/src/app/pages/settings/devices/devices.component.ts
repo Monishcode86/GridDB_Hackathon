@@ -2,12 +2,14 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
+import { MatIconModule } from '@angular/material/icon';
+
 
 
 @Component({
   selector: 'app-devices',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule,MatIconModule],
   templateUrl: './devices.component.html',
   styleUrl: './devices.component.scss'
 })

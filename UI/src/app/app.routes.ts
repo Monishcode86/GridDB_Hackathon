@@ -15,8 +15,6 @@ export const routes: Routes = [
         children: [
           { path: '', redirectTo: 'user', pathMatch: 'full' },
           { path: 'device', loadComponent: () => import('./pages/settings/devices/devices.component').then(m => m.DevicesComponent) },
-          { path: 'user', loadComponent: () => import('./pages/settings/user/user.component').then(m => m.UserComponent) },
-          { path: 'shift', loadComponent: () => import('./pages/settings/shift/shift.component').then(m => m.ShiftComponent) },
         ]
       }
 

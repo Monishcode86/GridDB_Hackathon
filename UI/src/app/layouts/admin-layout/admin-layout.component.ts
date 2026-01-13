@@ -24,9 +24,7 @@ currentDateTime: Date = new Date();
     { 
       label: 'Settings', icon: 'settings',
       submenu: [
-        { label: 'Devices', route: '/settings/device' },
-        { label: 'User', route: '/settings/user' },
-        { label: 'Shift', route: '/settings/shift' }
+        { label: 'Devices', route: '/settings/device' }
       ]
     }
   ];

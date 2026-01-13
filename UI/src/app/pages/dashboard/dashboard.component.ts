@@ -43,6 +43,7 @@ export class DashboardComponent implements OnInit {
   gaugeOption: any;
   progressOption: any;
   lineOption: any;
+  ganttOption: any;
   data: any[] = [];
 
   constructor(private dataService: DataService) { }
@@ -51,6 +52,7 @@ export class DashboardComponent implements OnInit {
     this.getGauge();
     this.getProgress();
     this.getLineChart();
+    this.getganttChart()
     this.getData();
   }
   changeDate(days: number) {
@@ -162,7 +164,7 @@ export class DashboardComponent implements OnInit {
     };
   }
 
-  getLineChart() {
+  getganttChart() {
     const data = [
       {
         name: 'Off',
@@ -248,7 +250,7 @@ export class DashboardComponent implements OnInit {
       return rect ? { type: 'rect', shape: rect, style: api.style() } : null;
     };
 
-    this.lineOption = {
+    this.ganttOption = {
       toolbox: {
         show: true,
         feature: {
@@ -301,6 +303,189 @@ export class DashboardComponent implements OnInit {
         encode: { x: [1, 2], y: 0 },
         data
       }]
+    };
+  }
+
+  getLineChart() {
+    let base = +new Date(2024, 0, 1);
+    let oneHour = 3600 * 1000;
+
+    let time: string[] = [];
+    let time2: string[] = [];
+    let lineData: number[] = [];
+    let barData: number[] = [];
+
+    let value = 100;
+
+    for (let i = 0; i < 24; i++) {
+      const now = new Date(base + i * oneHour);
+      time.push(
+        `${now.getHours().toString().padStart(2, '0')}:00`
+      );
+      barData.push(Math.round(Math.random() * 20 + 10));
+    }
+    for (let i = 0; i < 240000; i++) {
+      const now = new Date(base + i * oneHour);
+      time2.push(
+        `${now.getHours().toString().padStart(2, '0')}:00`
+      );
+
+      value += Math.round((Math.random() - 0.5) * 10);
+      lineData.push(value);
+
+    }
+
+    this.lineOption = {
+      title: {
+        text: 'Energy'
+      },
+      dataZoom: [
+        {
+          type: 'inside',
+          xAxisIndex: [0, 1]
+        }
+      ],
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'cross',
+          crossStyle: {
+            color: '#999'
+          }
+        },
+        formatter: function (params: any) {
+          let tooltipText = params[0].axisValue + '<br/>';
+          params.forEach((item: any) => {
+            tooltipText +=
+              item.marker + ' ' + item.seriesName + ': ' + item.data + '<br/>';
+          });
+          return tooltipText;
+        }
+      },
+
+      grid: [
+        {
+          top: 10,
+          left: 50,
+          right: 30,
+          height: '45%'
+        },
+        {
+          left: 50,
+          right: 30,
+          top: '55%',
+          height: '30%'
+        }
+      ],
+      xAxis: [
+        {
+          type: 'category',
+          data: time2,
+          boundaryGap: false,
+          gridIndex: 0,
+          axisLine: {
+            show: true,
+            lineStyle: {
+              color: '#000',
+              width: 1
+            }
+          },
+          axisTick: { show: false },
+          axisLabel: { show: false },
+          splitLine: { show: false }
+        },
+        {
+          type: 'category',
+          data: time,
+          boundaryGap: true,
+          gridIndex: 1
+
+        }
+      ],
+
+
+
+      yAxis: [
+        {
+          type: 'value',
+          name: 'kWh',
+          nameLocation: 'middle',
+          nameGap: 45,
+          gridIndex: 0,
+          axisTick: {
+            show: false
+          },
+          axisLine: {
+            show: false
+          },
+          splitLine: {
+            show: false,
+          },
+        },
+        {
+          type: 'value',
+          name: 'Hourly kWh',
+          nameLocation: 'middle',
+          nameGap: 45,
+          gridIndex: 1,
+          axisTick: {
+            show: false
+          },
+          axisLine: {
+            show: false
+          },
+          splitLine: {
+            show: false,
+          },
+        }
+      ],
+
+      series: [
+
+        {
+          name: 'Current',
+          type: 'line',
+          data: lineData,
+          xAxisIndex: 0,
+          yAxisIndex: 0,
+          symbol: 'none',
+          smooth: true,
+          sampling: 'lttb',
+          itemStyle: {
+            color: 'rgb(255, 70, 131)'
+          },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              {
+                offset: 0,
+                color: 'rgb(255, 158, 68)'
+              },
+              {
+                offset: 1,
+                color: 'rgb(255, 70, 131)'
+              }
+            ])
+          },
+        },
+
+
+        {
+          name: 'Hourly Consumption',
+          type: 'bar',
+          data: barData,
+          xAxisIndex: 1,
+          yAxisIndex: 1,
+          barWidth: '60%',
+          label: {
+            show: true,
+            position: 'top',
+            fontWeight: 'bold',
+            color: '#000',
+            formatter: '{c}'
+          }
+        }
+
+      ]
     };
   }
 
