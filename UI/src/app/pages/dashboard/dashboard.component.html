@@ -6,8 +6,8 @@
 
         <div class="d-flex align-items-center gap-2 mb-2">
           <label for="machineSelect" class="fw-bold mb-0">Machine:</label>
-          <select id="machineSelect" [(ngModel)]="selectedMachine" class="form-select form-select-sm">
-            <option *ngFor="let machine of machines" [value]="machine">{{ machine }}</option>
+          <select id="machineSelect" [(ngModel)]="selectedMachine" (change)="changeDevice($event)" class="form-select form-select-sm">
+            <option *ngFor="let machine of machines" [value]="machine.deviceId">{{ machine.machineName }}</option>
           </select>
         </div>
 
@@ -16,7 +16,7 @@
           <span class="badge status-badge" [ngClass]="{
               'text-bg-success': machineStatus === 'Running',
               'text-bg-warning': machineStatus === 'Idle',
-              'text-bg-danger': machineStatus === 'Off'
+              'text-bg-primary': machineStatus === 'Off'
             }">{{ machineStatus }}</span>
         </div>
 
@@ -25,19 +25,19 @@
             <mat-icon class="small-arrow">arrow_back</mat-icon>
           </button>
 
-          <input type="date" [(ngModel)]="selectedDate" class="form-control form-control-sm text-center" />
+          <input type="date" [(ngModel)]="selectedDate" (change)="changemmainDate($event)" [max]="today" class="form-control form-control-sm text-center" />
 
-          <button class="btn btn-primary btn-sm arrow-btn" (click)="changeDate(1)">
+          <button class="btn btn-primary btn-sm arrow-btn" [disabled]="isCurrent" (click)="changeDate(1)">
             <mat-icon class="small-arrow">arrow_forward</mat-icon>
           </button>
         
-            <button class="btn btn-sm btn-warning arrow-btn">
+            <button *ngIf="!isCurrent" class="btn btn-sm btn-warning arrow-btn">
             <mat-icon class="small-download">download</mat-icon>
           </button>
         </div>
 
         <div class="text-muted small fw-bold mb-2">
-          Last Updated: <span>{{ lastUpdatedTime }}</span>
+          Last Updated: <span>{{data?.lut}}</span>
         </div>
 
       </div>
@@ -67,21 +67,21 @@
                 <mat-icon class="text-success" style="font-size: 20px">access_time</mat-icon>
                 <span class="text-muted fw-bold small mb-0">Operating Time</span>
               </div>
-              <div class="fs-6 fw-semibold text-success mt-1">06:45 hrs</div>
+              <div class="fs-6 fw-semibold text-success mt-1">{{data?.operatingTime}} hrs</div>
             </div>
             <div class="flex-fill bg-light rounded-3 p-2 text-center border">
               <div class="d-flex align-items-center justify-content-center gap-1">
                 <mat-icon class="text-danger" style="font-size: 20px">warning</mat-icon>
                 <span class="text-muted fw-bold small mb-0">Downtime</span>
               </div>
-              <div class="fs-6 fw-semibold text-danger mt-1">01:15 hrs</div>
+              <div class="fs-6 fw-semibold text-danger mt-1">{{data?.downTime}} hrs</div>
             </div>
             <div class="flex-fill bg-light rounded-3 p-2 text-center border">
               <div class="d-flex align-items-center justify-content-center gap-1">
                 <mat-icon class="text-warning" style="font-size: 20px">notifications</mat-icon>
                 <span class="text-muted fw-bold small mb-0">Alarms</span>
               </div>
-              <div class="fs-6 fw-semibold text-warning mt-1">12</div>
+              <div class="fs-6 fw-semibold text-warning mt-1">{{data?.alarm}}</div>
             </div>
           </div>
           <div class="flex-grow-1">
