@@ -64,9 +64,9 @@ export class DashboardComponent implements OnInit {
   mqttdata: any;
   ganttdata: any;
   deviceIntervalSub: any;
-  avail:any;
-  performance:any;
-  quality:any;
+  avail: any;
+  performance: any;
+  quality: any;
 
 
   constructor(private modalService: NgbModal, private dataService: DataService) { }
@@ -87,11 +87,11 @@ export class DashboardComponent implements OnInit {
         if (this.deviceIntervalSub) {
           this.deviceIntervalSub.unsubscribe();
         }
-        // this.deviceIntervalSub = interval(30000).subscribe(() => {
-        //   this.getData();
-        //   this.getganttData();
+        this.deviceIntervalSub = interval(60000).subscribe(() => {
+          this.getData();
+          this.getganttData();
 
-        // });
+        });
       },
       error: (error) => {
         console.error(error)
@@ -99,7 +99,7 @@ export class DashboardComponent implements OnInit {
       }
     });
   }
-  machinealarmStatus:any=[]
+  machinealarmStatus: any = []
   getganttData() {
     this.dataService.get(`/ganttChart?deviceId=${this.selectedMachine}&date=${this.selectedDate}`).subscribe({
       next: (res: any) => {
@@ -387,7 +387,7 @@ export class DashboardComponent implements OnInit {
         padding: 10,
         extraCssText:
           "border-radius: 8px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);",
-        formatter: function (params:any) {
+        formatter: function (params: any) {
           var data = params.data;
           var statusColor =
             data.name === "Running"
@@ -397,8 +397,8 @@ export class DashboardComponent implements OnInit {
                 : data.name === "Off"
                   ? "#b0b0b0"
                   : data.name === "Breakdown"
-                        ? "#eb5857"
-                        : "grey";
+                    ? "#eb5857"
+                    : "grey";
 
           return `
             <div style="text-align: left; font-family: Arial, sans-serif; line-height: 1.5;">
@@ -450,160 +450,11 @@ export class DashboardComponent implements OnInit {
     };
   }
 
-  // getLineChart(energy: any) {
-
-  //   const lineTime = energy?.timeStamp;
-  //   const lineData = energy?.energy;
-  //   const hasNoData =
-  //     lineTime.length === 0 &&
-  //     lineData.length === 0;
-
-  //   if (hasNoData) {
-  //     this.lineOption = {
-  //       title: {
-  //         text: 'No Data Available',
-  //         left: 'center',
-  //         top: 'middle',
-  //         textStyle: {
-  //           color: '#999',
-  //           fontSize: 16,
-  //           fontWeight: 'bold',
-  //         },
-  //       },
-  //       tooltip: { show: false },
-  //       xAxis: { show: false },
-  //       yAxis: { show: false },
-  //       series: [],
-  //     };
-  //     return;
-  //   }
-  //   console.log(hasNoData)
-
-  //   this.lineOption = {
-  //     toolbox: {
-  //       show: true,
-  //       feature: {
-  //         restore: {},
-  //       },
-  //     },
-  //     title: {
-  //       text: 'Energy',
-  //     },
-  //     dataZoom: [
-  //       {
-  //         start: 90,
-  //         end: 100
-  //       },
-  //     ],
-  //     tooltip: {
-  //       trigger: 'axis',
-  //       axisPointer: {
-  //         type: 'cross',
-  //         crossStyle: {
-  //           color: '#999',
-  //         },
-  //       },
-  //       formatter: function (params: any) {
-  //         let tooltipText = params[0].axisValue + '<br/>';
-  //         params.forEach((item: any) => {
-  //           tooltipText +=
-  //             item.marker + ' ' + item.seriesName + ': ' + item.data + '<br/>';
-  //         });
-  //         return tooltipText;
-  //       },
-  //     },
-
-  //     grid:
-  //     {
-  //       top: 50,
-  //       left: 50,
-  //       right: 30,
-  //     },
-  //     // {
-  //     //   left: 50,
-  //     //   right: 30,
-  //     //   top: '55%',
-  //     //   height: '30%',
-  //     // },
-
-  //     xAxis: [
-  //       {
-  //         type: 'category',
-  //         data: lineTime,
-  //         boundaryGap: false,
-  //         gridIndex: 0,
-  //         axisLine: {
-  //           show: true,
-  //           lineStyle: {
-  //             color: '#000',
-  //             width: 1,
-  //           },
-  //         },
-  //         axisTick: { show: true },
-  //         axisLabel: { show: true },
-  //         splitLine: { show: true },
-  //       },
-
-  //     ],
-
-  //     yAxis: [
-  //       {
-  //         type: 'value',
-  //         name: 'kWh',
-  //         nameLocation: 'middle',
-  //         nameGap: 45,
-  //         gridIndex: 0,
-  //         axisTick: {
-  //           show: false,
-  //         },
-  //         axisLine: {
-  //           show: false,
-  //         },
-  //         splitLine: {
-  //           show: false,
-  //         },
-  //       },
-
-  //     ],
-
-  //     series: [
-  //       {
-  //         name: 'Current',
-  //         type: 'line',
-  //         data: lineData,
-  //         xAxisIndex: 0,
-  //         yAxisIndex: 0,
-  //         symbol: 'none',
-  //         smooth: false,
-  //         sampling: 'lttb',
-  //         itemStyle: {
-  //           color: 'rgb(255, 70, 131)',
-  //         },
-  //         areaStyle: {
-  //           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-  //             {
-  //               offset: 0,
-  //               color: 'rgb(255, 158, 68)',
-  //             },
-  //             {
-  //               offset: 1,
-  //               color: 'rgb(255, 70, 131)',
-  //             },
-  //           ]),
-  //         },
-  //       },
-
-  //     ],
-  //   };
-  // }
-
-  
-
   getLineChart(energy: any) {
 
     const lineTime = energy?.timeStamp ?? [];
     const lineData = energy?.energy ?? [];
-     const hourRanges: string[] = energy?.hours ?? [];
+    const hourRanges: string[] = energy?.hours ?? [];
 
     const barTime = energy?.hour;
     const barData = energy?.hourlyEnergy;
@@ -647,33 +498,30 @@ export class DashboardComponent implements OnInit {
         },
       ],
       tooltip: {
-      trigger: 'axis',
-      axisPointer: { type: 'cross' },
+        trigger: 'axis',
+        axisPointer: { type: 'cross' },
 
-      formatter: (params: any) => {
-        let text = '';
+        formatter: (params: any) => {
+          let text = '';
 
-        params.forEach((p: any) => {
-          // BAR TOOLTIP
-          if (p.seriesType === 'bar') {
-            const range = hourRanges[p.dataIndex]; // "00:00-01:00"
-            text += `
+          params.forEach((p: any) => {
+            if (p.seriesType === 'bar') {
+              const range = hourRanges[p.dataIndex]; // "00:00-01:00"
+              text += `
               <b>Hour:</b> ${range}<br/>
               ${p.marker} ${p.seriesName}: <b>${p.data} kWh</b><br/>
             `;
-          }
-
-          // LINE TOOLTIP
-          if (p.seriesType === 'line') {
-            text += `
+            }
+            if (p.seriesType === 'line') {
+              text += `
               ${p.marker} ${p.seriesName}: <b>${Number(p.data).toFixed(2)} kWh</b><br/>
             `;
-          }
-        });
+            }
+          });
 
-        return text;
+          return text;
+        },
       },
-    },
 
       grid: [
         {
@@ -690,25 +538,21 @@ export class DashboardComponent implements OnInit {
         },
       ],
       xAxis: [
-             {
-        type: 'category',
-        data: lineTime,
-        boundaryGap: false,
-        gridIndex: 0,
-        axisLabel: { show: false },
-      },
-      {
-        type: 'category',
-        gridIndex: 1,
-
-        // 👇 USE HOURS RANGE AS SOURCE
-        data: hourRanges,
-
-        // 👇 SHOW ONLY START HOUR BELOW BAR
-        axisLabel: {
-          formatter: (value: string) => value.split('-')[0], // "00:00"
+        {
+          type: 'category',
+          data: lineTime,
+          boundaryGap: false,
+          gridIndex: 0,
+          axisLabel: { show: false },
         },
-      }
+        {
+          type: 'category',
+          gridIndex: 1,
+          data: hourRanges,
+          axisLabel: {
+            formatter: (value: string) => value.split('-')[0], // "00:00"
+          },
+        }
       ],
 
       yAxis: [
@@ -815,7 +659,7 @@ export class DashboardComponent implements OnInit {
     });
   }
   alertModel() {
-    if(this.machinealarmStatus.length){
+    if (this.machinealarmStatus.length) {
       this.modalService.open(this.alerttemplate, {
         centered: true,
         backdrop: 'static',
@@ -859,130 +703,127 @@ export class DashboardComponent implements OnInit {
 
 
   async downloadReport(e: any) {
-   if (e === 'pdf') {
+    if (e === 'pdf') {
 
-  const doc = new jsPDF('p', 'mm', 'a4');
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
 
-  const margin = 10;
-  const headerHeight = 25; // IMPORTANT
-  const contentSpacing = 8;
+      const margin = 10;
+      const headerHeight = 25;
+      const contentSpacing = 8;
 
-  const now = new Date();
-  const downloadDateTime = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
-  const logoBase64 = await this.getBase64Image('/WinLogo.png');
+      const now = new Date();
+      const downloadDateTime = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+      const logoBase64 = await this.getBase64Image('/WinLogo.png');
 
-  // ================= HEADER =================
-  const drawHeader = (doc: any) => {
-    const y = 5;
+      const drawHeader = (doc: any) => {
+        const y = 5;
 
-    doc.addImage(logoBase64, 'PNG', margin, y, 30, 15);
+        doc.addImage(logoBase64, 'PNG', margin, y, 30, 15);
 
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Machine Performance Report', pageWidth / 2, y + 8, { align: 'center' });
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Machine Performance Report', pageWidth / 2, y + 8, { align: 'center' });
 
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Date: ${this.selectedDate}`, pageWidth / 2, y + 14, { align: 'center' });
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Date: ${this.selectedDate}`, pageWidth / 2, y + 14, { align: 'center' });
 
-    doc.setFontSize(9);
-    doc.text(downloadDateTime, pageWidth - margin, y + 5, { align: 'right' });
+        doc.setFontSize(9);
+        doc.text(downloadDateTime, pageWidth - margin, y + 5, { align: 'right' });
 
-    doc.setDrawColor(0);
-    doc.line(margin, y + 18, pageWidth - margin, y + 18);
-  };
+        doc.setDrawColor(0);
+        doc.line(margin, y + 18, pageWidth - margin, y + 18);
+      };
 
-  drawHeader(doc);
-
-  let y = headerHeight + contentSpacing;
-
-  // ================= SUMMARY TABLE =================
-  autoTable(doc, {
-    startY: y,
-    margin: {
-      top: headerHeight,
-      left: margin,
-      right: margin,
-      bottom: margin,
-    },
-    head: [['Parameter', 'Value']],
-    body: [
-      ['Operating Time', this.formatHoursToTime(this.ganttdata?.status?.operatingTime)],
-      ['Down Time', this.formatHoursToTime(this.ganttdata?.status?.downTime)],
-      ['Efficiency', `${this.formatFixed(this.ganttdata?.status?.efficiency)} %`],
-      ['Availability', `${this.formatFixed(this.ganttdata?.status?.availability)} %`],
-      ['Performance', `${this.formatFixed(this.ganttdata?.status?.performance)} %`],
-      ['Quality', `${this.formatFixed(this.ganttdata?.status?.quality)} %`],
-      ['Energy', `${this.formatFixed(this.ganttdata?.status?.energyData)} kWh`],
-      ['Alarm', this.ganttdata?.status?.alertsCount ?? 0],
-    ],
-    headStyles: { fillColor: [0, 125, 121], textColor: 255 },
-    bodyStyles: { fontSize: 10 },
-    showHead: 'everyPage',
-    didDrawPage: () => drawHeader(doc),
-  });
-
-  y = (doc as any).lastAutoTable.finalY + contentSpacing;
-
-  // ================= GANTT IMAGE =================
-  const ganttImg = this.ganttOptionchartInstance?.getDataURL({ pixelRatio: 2 });
-  if (ganttImg) {
-    if (y + 40 > pageHeight - margin) {
-      doc.addPage();
       drawHeader(doc);
-      y = headerHeight + contentSpacing;
+
+      let y = headerHeight + contentSpacing;
+
+      autoTable(doc, {
+        startY: y,
+        margin: {
+          top: headerHeight,
+          left: margin,
+          right: margin,
+          bottom: margin,
+        },
+        head: [['Parameter', 'Value']],
+        body: [
+          ['Running Time', `${this.ganttdata?.status?.running} hrs`],
+          ['Idle Time', `${this.ganttdata?.status?.idle} hrs`],
+          ['Breakdown Time', `${this.ganttdata?.status?.breakdown} hrs`],
+          ['Off Time', `${this.ganttdata?.status?.off} hrs`],
+          ['Efficiency', `${this.formatFixed(this.ganttdata?.status?.efficiency)} %`],
+          ['Availability', `${this.formatFixed(this.ganttdata?.status?.availability)} %`],
+          ['Performance', `${this.formatFixed(this.ganttdata?.status?.performance)} %`],
+          ['Quality', `${this.formatFixed(this.ganttdata?.status?.quality)} %`],
+          ['Energy', `${this.formatFixed(this.ganttdata?.status?.energyData)} kWh`],
+          ['Alarm', this.ganttdata?.status?.alertsCount ?? 0],
+        ],
+        headStyles: { fillColor: [0, 125, 121], textColor: 255 },
+        bodyStyles: { fontSize: 10 },
+        showHead: 'everyPage',
+        didDrawPage: () => drawHeader(doc),
+      });
+
+      y = (doc as any).lastAutoTable.finalY + contentSpacing;
+
+      const ganttImg = this.ganttOptionchartInstance?.getDataURL({ pixelRatio: 2 });
+      if (ganttImg) {
+        if (y + 40 > pageHeight - margin) {
+          doc.addPage();
+          drawHeader(doc);
+          y = headerHeight + contentSpacing;
+        }
+
+        doc.setFontSize(12);
+        doc.text('Machine Timeline', margin, y);
+        doc.addImage(ganttImg, 'PNG', margin, y + 5, pageWidth - 2 * margin, 30);
+        y += 40;
+      }
+
+      const lineImg = this.lineOptionchartInstance?.getDataURL({ pixelRatio: 2 });
+      if (lineImg) {
+        if (y + 65 > pageHeight - margin) {
+          doc.addPage();
+          drawHeader(doc);
+          y = headerHeight + contentSpacing;
+        }
+
+        doc.setFontSize(12);
+        doc.text('Energy Trend', margin, y);
+        doc.addImage(lineImg, 'PNG', margin, y + 5, pageWidth - 2 * margin, 55);
+        y += 65;
+      }
+
+      const hourlyTableBody = (this.data?.hours || []).map(
+        (hour: string, index: number) => [
+          hour,
+          `${this.formatFixed(this.data?.hourlyEnergy?.[index])} kWh`
+        ]
+      );
+
+      autoTable(doc, {
+        startY: y,
+        margin: {
+          top: headerHeight,
+          left: margin,
+          right: margin,
+          bottom: margin,
+        },
+        head: [['Hour', 'Energy Consumption']],
+        body: hourlyTableBody,
+        headStyles: { fillColor: [0, 125, 121], textColor: 255 },
+        bodyStyles: { fontSize: 10 },
+        showHead: 'everyPage',
+        didDrawPage: () => drawHeader(doc),
+      });
+
+      doc.save(`Machine_Report_${this.selectedDate}.pdf`);
     }
-
-    doc.setFontSize(12);
-    doc.text('Machine Timeline', margin, y);
-    doc.addImage(ganttImg, 'PNG', margin, y + 5, pageWidth - 2 * margin, 30);
-    y += 40;
-  }
-
-  // ================= ENERGY TREND =================
-  const lineImg = this.lineOptionchartInstance?.getDataURL({ pixelRatio: 2 });
-  if (lineImg) {
-    if (y + 65 > pageHeight - margin) {
-      doc.addPage();
-      drawHeader(doc);
-      y = headerHeight + contentSpacing;
-    }
-
-    doc.setFontSize(12);
-    doc.text('Energy Trend', margin, y);
-    doc.addImage(lineImg, 'PNG', margin, y + 5, pageWidth - 2 * margin, 55);
-    y += 65;
-  }
-
-  // ================= HOURLY TABLE =================
-  const hourlyTableBody = (this.data?.hours || []).map(
-    (hour: string, index: number) => [
-      hour,
-      `${this.formatFixed(this.data?.hourlyEnergy?.[index])} kWh`
-    ]
-  );
-
-  autoTable(doc, {
-    startY: y,
-    margin: {
-      top: headerHeight,
-      left: margin,
-      right: margin,
-      bottom: margin,
-    },
-    head: [['Hour', 'Energy Consumption']],
-    body: hourlyTableBody,
-    headStyles: { fillColor: [0, 125, 121], textColor: 255 },
-    bodyStyles: { fontSize: 10 },
-    showHead: 'everyPage',
-    didDrawPage: () => drawHeader(doc),
-  });
-
-  doc.save(`Machine_Report_${this.selectedDate}.pdf`);
-}
-else if (e === 'excel') {
+    else if (e === 'excel') {
 
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('Machine Performance');
@@ -1002,7 +843,6 @@ else if (e === 'excel') {
 
       let rowIndex = 1;
 
-      // ===== TITLE =====
       sheet.mergeCells(`A${rowIndex}:B${rowIndex}`);
       sheet.getCell(`A${rowIndex}`).value = 'Machine Performance Report';
       sheet.getCell(`A${rowIndex}`).font = { size: 16, bold: true };
@@ -1019,7 +859,6 @@ else if (e === 'excel') {
       sheet.getCell(`A${rowIndex}`).alignment = { horizontal: 'center' };
       rowIndex += 2;
 
-      // ===== SUMMARY HEADER =====
       sheet.getRow(rowIndex).values = ['Parameter', 'Value'];
       sheet.getRow(rowIndex).eachCell((c: any) => {
         c.fill = headerFill;
@@ -1029,10 +868,11 @@ else if (e === 'excel') {
       });
       rowIndex++;
 
-      // ===== SUMMARY DATA =====
       [
-        ['Operating Time', this.formatHoursToTime(this.ganttdata?.status?.operatingTime)],
-        ['Down Time', this.formatHoursToTime(this.ganttdata?.status?.downTime)],
+        ['Running Time', `${this.ganttdata?.status?.running} hrs`],
+        ['Idle Time', `${this.ganttdata?.status?.idle} hrs`],
+        ['Breakdown Time', `${this.ganttdata?.status?.breakdown} hrs`],
+        ['Off Time', `${this.ganttdata?.status?.off} hrs`],
         ['Efficiency', `${this.formatFixed(this.ganttdata?.status?.efficiency)} %`],
         ['Availability', `${this.formatFixed(this.ganttdata?.status?.availability)} %`],
         ['Performance', `${this.formatFixed(this.ganttdata?.status?.performance)} %`],
@@ -1050,7 +890,6 @@ else if (e === 'excel') {
 
       rowIndex += 2;
 
-      // ===== HOURLY HEADER =====
       sheet.getRow(rowIndex).values = ['Hour', 'Energy Consumption'];
       sheet.getRow(rowIndex).eachCell((c: any) => {
         c.fill = headerFill;
@@ -1060,7 +899,6 @@ else if (e === 'excel') {
       });
       rowIndex++;
 
-      // ===== HOURLY DATA =====
       (this.data?.hours || []).forEach((hour: string, i: number) => {
         sheet.addRow([
           hour,

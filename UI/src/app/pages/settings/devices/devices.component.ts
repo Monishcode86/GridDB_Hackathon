@@ -73,16 +73,20 @@ export class DevicesComponent implements OnInit {
 
     })
   }
-
+  devId: any
   saveData() {
     this.submit = true;
     if (this.deviceForm.invalid) {
       return
     }
+    this.devId = this.deviceForm.get('deviceId')?.value
+    console.log(this.deviceForm.get('deviceId')?.value, this.deviceForm.value)
     if (this.action == 'Add') {
       this.dataservice.post('/device', this.deviceForm.value).subscribe({
         next: ((res: any) => {
+
           this.getDeviceData();
+          this.createCertificate()
         }),
         error: ((error: any) => {
         })
@@ -100,6 +104,19 @@ export class DevicesComponent implements OnInit {
       })
     }
     this.cancel()
+  }
+
+  createCertificate() {
+
+    let obj = {
+      deviceId: this.devId
+    }
+    this.dataservice.post('/certificate', obj).subscribe({
+      next: ((res: any) => {
+      }),
+      error: ((error: any) => {
+      })
+    })
   }
 
   editDevice(item: any) {
@@ -141,12 +158,27 @@ export class DevicesComponent implements OnInit {
     this.dataservice.delete(`/device?deviceId=${this._id}`).subscribe({
       next: ((res: any) => {
         this.getDeviceData();
+        this.deleteCertificate();
       }),
       error: ((error: any) => {
       })
     })
     this.cancel()
 
+  }
+
+  deleteCertificate() {
+    let obj = {
+      deviceId: this._id
+    }
+    console.log(this._id, obj)
+    this.dataservice.delete(`/certificate?deviceId=${this._id}`).subscribe({
+      next: ((res: any) => {
+
+      }),
+      error: ((error: any) => {
+      })
+    })
   }
 
   cancel() {

@@ -114,14 +114,24 @@
 
 .hover-submenu {
   position: absolute;
-  left: 70px;
-  top: 40px;
+  left: 70px; 
+  top: 100px;
   width: 190px;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
   padding: 6px 0;
   z-index: 2000;
+}
+
+.snack-success {
+  background-color: #2e7d32 !important;
+  color: #fff;
+}
+
+.snack-error {
+  background-color: #c62828 !important;
+  color: #fff;
 }
 
 .hover-submenu .nav-link {

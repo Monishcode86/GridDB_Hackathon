@@ -1,38 +1,40 @@
 import { Injectable } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
 import { BehaviorSubject } from 'rxjs';
-
+ 
 @Injectable({
   providedIn: 'root'
 })
-export class TestServiceService {
+export class SignalRService {
+ 
   private hubConnection!: signalR.HubConnection;
-  public deviceEvents = new BehaviorSubject<any[]>([]);
  
-  constructor() {}
+  public deviceStatus$ = new BehaviorSubject<any>(null);
  
-  public startConnection() {
+  async connect() {
+    const negotiateResponse = await fetch(
+      'https://gridstatus.azurewebsites.net/api/Negotiate'
+    );
+ 
+    const negotiate = await negotiateResponse.json();
+ 
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl('https://eventgridnotify.service.signalr.net/client/?hub=telemetry')
+      .withUrl(negotiate.url, {
+        accessTokenFactory: () => negotiate.accessToken
+      })
       .withAutomaticReconnect()
       .build();
  
-    this.hubConnection
-      .start()
-      .then(() => console.log('Connected to SignalR hub'))
-      .catch(err => console.error('SignalR connection error:', err));
- 
-    // Listen to events from Azure Function
-    this.hubConnection.on('deviceStatus', (data: any) => {
-      console.log('Received device event:', data);
- 
-      // Update observable
-      const current = this.deviceEvents.value;
-      this.deviceEvents.next([...current, data]);
+    this.hubConnection.on('deviceStatus', (data) => {
+      console.log('SignalR data:', data);
+      this.deviceStatus$.next(data);
     });
+ 
+    await this.hubConnection.start();
+    console.log('SignalR connected');
   }
  
-  public stopConnection() {
+  disconnect() {
     if (this.hubConnection) {
       this.hubConnection.stop();
     }

@@ -5,20 +5,13 @@ import { Pipe, PipeTransform } from '@angular/core';
   standalone: true
 })
 export class DateHoursToTimePipePipe implements PipeTransform {
+  transform(value: string): string {
+    if (!value) return '00:00:00';
 
-   transform(hours: number): string {
-    if (!hours && hours !== 0) return '00:00:00';
+    const parts = value.split(':');
 
-    const totalSeconds = Math.floor(hours * 3600);
-    const h = Math.floor(totalSeconds / 3600);
-    const m = Math.floor((totalSeconds % 3600) / 60);
-    const s = totalSeconds % 60;
+    const seconds = parts[2].split('.')[0];
 
-    return `${this.pad(h)}:${this.pad(m)}:${this.pad(s)}`;
+    return `${parts[0]}:${parts[1]}:${seconds}`;
   }
-
-  private pad(num: number): string {
-    return num.toString().padStart(2, '0');
-  }
-
 }

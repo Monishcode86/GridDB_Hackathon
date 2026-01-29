@@ -11,7 +11,6 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent) },
       { path: 'energydashboard', loadComponent: () => import('./pages/energy-dashboard/energy-dashboard.component').then(m=>m.EnergyDashboardComponent) },
-      { path: 'test',loadComponent:()=>import('./pages/test/test.component').then(m=>m.TestComponent)},
       {
         path: 'settings',
         children: [

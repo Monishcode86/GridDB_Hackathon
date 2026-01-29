@@ -79,9 +79,9 @@ export class EnergyDashboardComponent implements OnInit, OnDestroy {
           this.selectedMachine = this.machines[0].deviceId;
           this.getData();
 
-          // this.deviceIntervalSub = interval(30000).subscribe(() => {
-          //   this.getData();
-          // });
+          this.deviceIntervalSub = interval(60000).subscribe(() => {
+            this.getData();
+          });
         }
       },
       error: console.error,

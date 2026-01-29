@@ -29,6 +29,7 @@
               [ngClass]="{
                 'text-bg-success': machineStatus === 'Running',
                 'text-bg-warning': machineStatus === 'Idle',
+                'text-bg-danger': machineStatus === 'Breakdown',
                 'text-bg-primary': machineStatus === 'Off',
               }"
               >{{ machineStatus }}</span
@@ -67,12 +68,15 @@
               <mat-icon class="small-download">download</mat-icon>
             </button>
           </div>
-
-          <div class="text-muted small fw-bold mb-2">
-            Last Updated:
-            <span>{{
-              ganttdata?.status?.LTU | date: "dd-MM-yyyy HH:mm:ss"
-            }}</span>
+          <div class="d-flex">
+            <mat-icon class="text-danger blink-alarm" style="cursor: pointer !important;" *ngIf="ganttdata?.status?.alerts?.length" (click)="alertModel()" style="font-size: 20px" 
+           [class.blink-alarm]="ganttdata?.status?.alerts?.length > 0" > notifications </mat-icon>
+            <div class="text-muted small fw-bold mb-2">
+              Last Updated:
+              <span>{{
+                ganttdata?.status?.LTU | date: "dd-MM-yyyy HH:mm:ss"
+              }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -128,56 +132,67 @@
       <div class="card shadow-sm border-0 rounded-1" style="height: 240px">
         <div class="card-body d-flex flex-column">
           <div class="d-flex gap-2 mb-2">
+            <!-- Running -->
             <div class="flex-fill bg-light rounded-3 p-2 text-center border">
               <div
                 class="d-flex align-items-center justify-content-center gap-1"
               >
-                <mat-icon class="text-success" style="font-size: 20px"
-                  >access_time</mat-icon
-                >
-                <span class="text-muted fw-bold small mb-0"
-                  >Operating Time</span
-                >
+                <mat-icon class="text-success" style="font-size: 20px">
+                  play_circle
+                </mat-icon>
+                <span class="text-muted fw-bold small">Running</span>
               </div>
               <div class="fs-6 fw-semibold text-success mt-1">
-                {{ ganttdata?.status?.operatingTime | dateHoursToTimePipe }} hrs
+                {{ ganttdata?.status?.running | dateHoursToTimePipe }} hrs
               </div>
             </div>
+
+            <!-- Idle -->
             <div class="flex-fill bg-light rounded-3 p-2 text-center border">
               <div
                 class="d-flex align-items-center justify-content-center gap-1"
               >
-                <mat-icon class="text-danger" style="font-size: 20px"
-                  >warning</mat-icon
-                >
-                <span class="text-muted fw-bold small mb-0">Downtime</span>
+                <mat-icon class="text-warning" style="font-size: 20px">
+                  pause_circle
+                </mat-icon>
+                <span class="text-muted fw-bold small">Idle</span>
+              </div>
+              <div class="fs-6 fw-semibold text-warning mt-1">
+                {{ ganttdata?.status?.idle | dateHoursToTimePipe }} hrs
+              </div>
+            </div>
+
+            <!-- Breakdown -->
+            <div class="flex-fill bg-light rounded-3 p-2 text-center border">
+              <div
+                class="d-flex align-items-center justify-content-center gap-1"
+              >
+                <mat-icon class="text-danger" style="font-size: 20px">
+                  build_circle
+                </mat-icon>
+                <span class="text-muted fw-bold small">Breakdown</span>
               </div>
               <div class="fs-6 fw-semibold text-danger mt-1">
-                {{ ganttdata?.status?.downTime | dateHoursToTimePipe }} hrs
+                {{ ganttdata?.status?.breakdown | dateHoursToTimePipe }} hrs
               </div>
             </div>
+
+            <!-- Off -->
             <div class="flex-fill bg-light rounded-3 p-2 text-center border">
               <div
                 class="d-flex align-items-center justify-content-center gap-1"
-                [class.cursor-pointer]="ganttdata?.status?.alerts?.length > 0"
-                (click)="alertModel()"
               >
-                <mat-icon
-                  class="text-warning"
-                  style="font-size: 20px"
-                  [class.opacity-50]="!ganttdata?.status?.alerts?.length"
-                >
-                  notifications
+                <mat-icon class="text-secondary" style="font-size: 20px">
+                  power_settings_new
                 </mat-icon>
-
-                <span class="text-muted fw-bold small mb-0"> Alarms </span>
+                <span class="text-muted fw-bold small">Off</span>
               </div>
-
-              <div class="fs-6 fw-semibold text-warning mt-1">
-                {{ mqttdata || 0 }}
+              <div class="fs-6 fw-semibold text-secondary mt-1">
+                {{ ganttdata?.status?.off | dateHoursToTimePipe }} hrs
               </div>
             </div>
           </div>
+
           <div class="flex-grow-1">
             <div
               echarts
@@ -271,10 +286,10 @@
 
       <tbody>
         <tr *ngFor="let val of machinealarmStatus">
-          <td> {{ val.value[1] | date: "dd-MM-yyyy HH:mm:ss" }} </td>
-          <td> {{ val.value[2] | date: "dd-MM-yyyy HH:mm:ss" }} </td>
-          <td>   {{ val.value[3]?.split('.')[0] }}</td>
-          <td> {{ val.name }} </td>
+          <td>{{ val.value[1] | date: "dd-MM-yyyy HH:mm:ss" }}</td>
+          <td>{{ val.value[2] | date: "dd-MM-yyyy HH:mm:ss" }}</td>
+          <td>{{ val.value[3]?.split(".")[0] }}</td>
+          <td>{{ val.name }}</td>
         </tr>
       </tbody>
     </table>
