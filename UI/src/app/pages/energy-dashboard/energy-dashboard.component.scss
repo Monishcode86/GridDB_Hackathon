@@ -1,0 +1,60 @@
+.arrow-btn {
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.small-arrow {
+  font-size: 24px;
+}
+
+.month-label {
+  font-weight: 600;
+  font-size: 14px;
+  min-width: 120px;
+  text-align: center;
+}
+
+.status-badge {
+  position: relative;
+  animation: statusPulse 1.5s infinite;
+  border: 1px solid transparent;
+}
+
+/* Running */
+.text-bg-success.status-badge {
+  --status-color: #198754;
+}
+
+/* Idle */
+.text-bg-warning.status-badge {
+  --status-color: #ffc107;
+  color: #000; /* better contrast for warning */
+}
+
+/* Off */
+.text-bg-danger.status-badge {
+  --status-color: #dc3545;
+}
+
+@keyframes statusPulse {
+  0% {
+    background-color: var(--status-color);
+    color: #fff;
+    border-color: var(--status-color);
+  }
+
+  50% {
+    background-color: #ffffff;
+    color: var(--status-color);
+    border-color: var(--status-color);
+  }
+
+  100% {
+    background-color: var(--status-color);
+    color: #fff;
+    border-color: var(--status-color);
+  }
+}
+

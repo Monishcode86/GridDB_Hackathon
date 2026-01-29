@@ -20,7 +20,9 @@ currentDateTime: Date = new Date();
   hoverMenuIndex: number | null = null;
  sidebarOpen: boolean = false;
   menuItems = [
-    { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
+    { label: 'OEE', icon: 'dashboard', route: '/dashboard' },
+    { label: 'Energy', icon: 'bolt', route: '/energydashboard' },
+    { label: 'Test', icon: 'bolt', route: '/test' },
     { 
       label: 'Settings', icon: 'settings',
       submenu: [

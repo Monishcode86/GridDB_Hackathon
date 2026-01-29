@@ -1,0 +1,148 @@
+<div class="container-fluid py-3">
+  <div class="row align-items-stretch">
+    <div class="col-md-12">
+      <div class="card shadow-sm border-0 rounded-1">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <label for="machineSelect" class="fw-bold mb-0">Machine:</label>
+            <select id="machineSelect" [(ngModel)]="selectedMachine" (change)="changeDevice($event)"
+              class="form-select form-select-sm">
+              <option *ngFor="let machine of machines" [value]="machine.deviceId">
+                {{ machine.deviceName }}
+              </option>
+            </select>
+          </div>
+
+          <div class="d-flex align-items-center gap-1 mb-2">
+            <button class="btn btn-primary btn-sm arrow-btn" (click)="changeDate(-1)">
+              <mat-icon class="small-arrow">arrow_back</mat-icon>
+            </button>
+
+            <input type="date" [(ngModel)]="selectedDate" (change)="changemmainDate($event)" [max]="today"
+              class="form-control form-control-sm text-center" />
+
+            <button class="btn btn-primary btn-sm arrow-btn" [disabled]="isCurrent" (click)="changeDate(1)">
+              <mat-icon class="small-arrow">arrow_forward</mat-icon>
+            </button>
+
+            <button *ngIf="!isCurrent" (click)="openModel()" class="btn btn-sm btn-warning arrow-btn">
+              <mat-icon class="small-download">download</mat-icon>
+            </button>
+          </div>
+
+          <div class="text-muted small fw-bold mb-2">
+            Last Updated:
+            <span>{{ reportData?.LTU }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row g-3 mt-1 align-items-stretch">
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 rounded-1" style="height: 240px">
+        <div class="card-body d-flex flex-column justify-content-center">
+          <div class="d-flex align-items-center mb-2 justify-content-center gap-2">
+            <h6 class="fw-bold mb-0">Energy</h6>
+          </div>
+          <div echarts [options]="progressOption" (chartInit)="progressOptionChartInit($event)"
+            style="height: 160px; width: 100%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 rounded-1" style="height: 240px">
+        <div class="card-body d-flex flex-column justify-content-center">
+          <div class="d-flex align-items-center mb-2 justify-content-center gap-2">
+            <h6 class="fw-bold mb-0">Reactive Power</h6>
+          </div>
+          <div echarts [options]="progressReactiveOption" (chartInit)="progressReactiveOptionChartInit($event)"
+            style="height: 160px; width: 100%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 rounded-1" style="height: 240px">
+        <div class="card-body d-flex flex-column justify-content-center">
+          <div class="d-flex align-items-center mb-2 justify-content-center gap-2">
+            <h6 class="fw-bold mb-0">Real Power</h6>
+          </div>
+          <div echarts [options]="progressRealOption" (chartInit)="progressRealOptionChartInit($event)"
+            style="height: 160px; width: 100%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm border-0 rounded-1" style="height: 240px">
+        <div class="card-body d-flex flex-column justify-content-center">
+          <div class="d-flex align-items-center mb-2 justify-content-center gap-2">
+            <h6 class="fw-bold mb-0">Apparent Power</h6>
+          </div>
+          <div echarts [options]="progressApparentOption" (chartInit)="progressApparentOptionChartInit($event)"
+            style="height: 160px; width: 100%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mt-1 align-items-stretch">
+    <div class="col-md-12">
+      <div class="card shadow-sm border-0 rounded-3" style="height: 350px">
+        <div class="card-body d-flex flex-column">
+          <div class="flex-grow-1">
+            <div echarts [options]="lineOption" (chartInit)="lineOptionChartInit($event)"
+              style="height: 350px; width: 100%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row g-3 mt-1 align-items-stretch">
+    <div class="col-md-12">
+      <div class="card shadow-sm border-0 rounded-3" style="height: 350px">
+        <div class="card-body d-flex flex-column">
+          <div class="flex-grow-1">
+            <div echarts [options]="linevoltageOption" (chartInit)="linevoltageOptionChartInit($event)"
+              style="height: 350px; width: 100%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row g-3 mt-1 align-items-stretch">
+    <div class="col-md-12">
+      <div class="card shadow-sm border-0 rounded-3" style="height: 350px">
+        <div class="card-body d-flex flex-column">
+          <div class="flex-grow-1">
+            <div echarts [options]="linepowerfoactorOption" (chartInit)="linepowerfactorOptionChartInit($event)"
+              style="height: 350px; width: 100%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #downloadtemplate let-modal>
+  <div class="model-header d-flex justify-content-between align-items-center p-3">
+    <h5 class="modal-title">Export Report</h5>
+    <button type="button" class="btn-close" aria-label="Close" (click)="modal.close()"></button>
+  </div>
+  <div class="modal-body">
+    <div class="form-group d-flex justify-content-between">
+      <div>
+        <button class="btn btn-success" type="button" (click)="downloadReport('pdf')">
+          PDF
+        </button>
+        &nbsp;
+        <button class="btn btn-primary" type="button" (click)="downloadReport('excel')">
+          EXCEL
+        </button>
+      </div>
+
+      <button class="btn btn-danger" type="button" (click)="modal.close()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</ng-template>

@@ -8,6 +8,8 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
+import { interval, Subject, Subscription } from 'rxjs';
 
 import * as echarts from 'echarts/core';
 import {
@@ -20,6 +22,7 @@ import { CustomChart } from 'echarts/charts';
 import { CanvasRenderer } from 'echarts/renderers';
 import { MatIconModule } from '@angular/material/icon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DateHoursToTimePipePipe } from '../../services/pipes/date-hours-to-time-pipe.pipe';
 
 echarts.use([
   GridComponent,
@@ -33,13 +36,19 @@ echarts.use([
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FormsModule, CommonModule, NgxEchartsDirective, MatIconModule],
+  imports: [FormsModule, CommonModule, NgxEchartsDirective, MatIconModule, DateHoursToTimePipePipe],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent implements OnInit {
+
+  private ws!: WebSocket;
+  private reconnectTimeout: any;
+  private destroyed = false;
+
   machines: any[] = [];
   @ViewChild('downloadtemplate') downloadtemplate!: TemplateRef<any>;
+  @ViewChild('alerttemplate') alerttemplate!: TemplateRef<any>;
   selectedMachine: string = '';
   selectedDate: string = new Date().toISOString().split('T')[0];
   machineStatus: string = 'Off';
@@ -52,33 +61,124 @@ export class DashboardComponent implements OnInit {
   data: any = {};
   today: string = new Date().toISOString().split('T')[0];
   isCurrent: boolean = true;
+  mqttdata: any;
+  ganttdata: any;
+  deviceIntervalSub: any;
+  avail:any;
+  performance:any;
+  quality:any;
+
+
   constructor(private modalService: NgbModal, private dataService: DataService) { }
 
   ngOnInit() {
     this.getDevice()
+    // this.connectWebSocket();
+
   }
   getDevice() {
     this.dataService.get(`/device`).subscribe({
       next: (res: any) => {
-        this.machines = [{ deviceId: "GHC4HGV5", machineName: 'Machine 1' }, { deviceId: "G1HCHGV5", machineName: 'Machine 2' }, { deviceId: "GH55CHGV5", machineName: 'Machine 3' }]
+        this.machines = res
         this.selectedMachine = this.machines[0]['deviceId']
+
         this.getData();
+        this.getganttData();
+        if (this.deviceIntervalSub) {
+          this.deviceIntervalSub.unsubscribe();
+        }
+        // this.deviceIntervalSub = interval(30000).subscribe(() => {
+        //   this.getData();
+        //   this.getganttData();
+
+        // });
       },
       error: (error) => {
-        console.error(error),
-          this.machines = [{ deviceId: "GHC4HGV5", machineName: 'Machine 1' }, { deviceId: "G1HCHGV5", machineName: 'Machine 2' }, { deviceId: "GH55CHGV5", machineName: 'Machine 3' }]
-        this.selectedMachine = this.machines[0]['deviceId']
-        this.getData();
+        console.error(error)
 
       }
     });
   }
+  machinealarmStatus:any=[]
+  getganttData() {
+    this.dataService.get(`/ganttChart?deviceId=${this.selectedMachine}&date=${this.selectedDate}`).subscribe({
+      next: (res: any) => {
+        this.ganttdata = res
+        this.machineStatus = this.ganttdata?.['status']?.['status'];
+        this.machinealarmStatus = this.ganttdata?.['status']?.['alerts'];
+        this.getganttChart(this.ganttdata?.ganttChart || []);
+        this.avail = Number(this.ganttdata?.status?.availability || 0).toFixed(1);
+        this.performance = Number(this.ganttdata?.status?.performance || 0).toFixed(1);
+        this.quality = Number(this.ganttdata?.status?.quality || 0).toFixed(1);
+
+        this.getGauge(this.ganttdata?.['status']?.efficiency || 0);
+        this.getProgress(this.ganttdata?.['status']?.energyData || 0);
+        this.mqttdata = this.ganttdata?.['status']?.['alertsCount'];
+      },
+      error: (error) => {
+        console.error(error)
+
+      }
+    });
+  }
+  // connectWebSocket() {
+  //   this.ws = new WebSocket('wss://data-stream.binance.vision/ws/btcusdt@trade');
+
+  //   this.ws.onopen = () => {
+  //     console.log('WebSocket connected');
+  //   };
+
+  //   this.ws.onmessage = (msg) => {
+  //     // console.log('WebSocket message received:------------------------------------>', msg.data);
+  //     let message: any;
+
+  //     try {
+  //       message = JSON.parse(msg.data);
+  //     } catch {
+  //       message = msg.data;
+  //     }
+
+  //     this.handleRealtimeData(message);
+  //   };
+
+  //   this.ws.onerror = (err) => {
+  //     console.error('WebSocket error:', err);
+  //     this.reconnect();
+  //   };
+
+  //   this.ws.onclose = () => {
+  //     console.warn('WebSocket closed, reconnecting...');
+  //     this.reconnect();
+  //   };
+  // }
+
+  // reconnect() {
+  //   if (this.destroyed) return;
+  //   if (this.reconnectTimeout) {
+  //     clearTimeout(this.reconnectTimeout);
+  //   }
+
+  //   this.reconnectTimeout = setTimeout(() => {
+  //     console.log('Reconnecting WebSocket...');
+  //     this.connectWebSocket();
+  //   }, 5000);
+  // }
+
+  // handleRealtimeData(message: any) {
+  //   if (typeof message === 'object') {
+
+  //     this.mqttdata = Number(message.p).toFixed(2);
+  //   }
+  // }
+
   changeDevice(e: any) {
-    this.getData()
+    this.getData();
+    this.getganttData();
   }
   changemmainDate(e: any) {
     this.isCurrent = false;
-    this.getData()
+    this.getData();
+    this.getganttData();
   }
   changeDate(days: number) {
     const current = new Date(this.selectedDate);
@@ -91,6 +191,7 @@ export class DashboardComponent implements OnInit {
     this.selectedDate = current.toISOString().split('T')[0];
     this.lastUpdatedTime = new Date().toLocaleTimeString();
     this.getData();
+    this.getganttData();
   }
 
   generateEnergyLineData(
@@ -110,7 +211,7 @@ export class DashboardComponent implements OnInit {
       currentValue += (Math.random() - 0.5) * 2;
 
       data.push({
-        time: currentTime.toISOString().substr(11, 12), 
+        time: currentTime.toISOString().substr(11, 12),
         value: Number(currentValue.toFixed(2))
       });
 
@@ -121,267 +222,20 @@ export class DashboardComponent implements OnInit {
   }
 
   getData() {
-    this.dataService.get(`/products`).subscribe({
+    this.dataService.get(`/energyMetrics?deviceId=${this.selectedMachine}&date=${this.selectedDate}`).subscribe({
       next: (res: any) => {
-        console.log(this.selectedDate)
-        this.data = {
-          operatingTime: "21:15:00",
-          downTime: "02:45:00",
-          alarm: 2,
-          status: 'Running',
-          lut: '6:36:42 PM',
-          energyData: 45,
-          efficiency: 62,
-          gauges: {
-            efficiency: {
-              value: 82,
-              unit: '%'
-            },
-            energyProgress: {
-              value: 45,
-              unit: 'kWh'
-            }
-          },
-
-          gantt: {
-            machine: 'Machine 1',
-            datas: [
-              {
-                name: 'Off',
-                fromTo: '06:00:00-06:15:00',
-                value: [0, 1734049800000, 1734050700000, 900],
-                itemStyle: { color: '#b0b0b0' },
-              },
-              {
-                name: 'Idle',
-                fromTo: '06:15:00-06:40:30',
-                value: [0, 1734050700000, 1734052230000, 1530],
-                itemStyle: { color: '#f7c030' },
-              },
-              {
-                name: 'Running',
-                fromTo: '06:40:30-07:25:10',
-                value: [0, 1734052230000, 1734054910000, 2670],
-                itemStyle: { color: '#548237' },
-              },
-              {
-                name: 'Idle',
-                fromTo: '07:25:10-07:35:00',
-                value: [0, 1734054910000, 1734055500000, 590],
-                itemStyle: { color: '#f7c030' },
-              },
-              {
-                name: 'Running',
-                fromTo: '07:35:00-08:45:20',
-                value: [0, 1734055500000, 1734059720000, 4220],
-                itemStyle: { color: '#548237' },
-              },
-              {
-                name: 'Off',
-                fromTo: '08:45:20-09:10:00',
-                value: [0, 1734059720000, 1734061200000, 1480],
-                itemStyle: { color: '#b0b0b0' },
-              },
-              {
-                name: 'Running',
-                fromTo: '09:10:00-10:05:45',
-                value: [0, 1734061200000, 1734064545000, 3345],
-                itemStyle: { color: '#548237' },
-              },
-              {
-                name: 'Idle',
-                fromTo: '10:05:45-10:30:00',
-                value: [0, 1734064545000, 1734066000000, 1455],
-                itemStyle: { color: '#f7c030' },
-              },
-              {
-                name: 'Running',
-                fromTo: '10:30:00-11:50:00',
-                value: [0, 1734066000000, 1734071400000, 5400],
-                itemStyle: { color: '#548237' },
-              },
-              {
-                name: 'Off',
-                fromTo: '11:50:00-12:30:00',
-                value: [0, 1734071400000, 1734073800000, 2400],
-                itemStyle: { color: '#b0b0b0' },
-              },
-            ]
-          },
-
-          energy: {
-            line: {
-              unit: 'kWh',
-              data: [
-                { time: '00:00', value: 100 },
-                { time: '00:10', value: 98 },
-                { time: '00:15', value: 105 },
-                { time: '00:45', value: 100 },
-                { time: '01:21', value: 98 },
-                { time: '01:45', value: 105 },
-                { time: '01:56', value: 100 },
-                { time: '02:00', value: 98 },
-                { time: '02:12', value: 105 },
-                { time: '02:37', value: 100 },
-                { time: '02:45', value: 98 },
-                { time: '03:00', value: 105 },
-                { time: '03:18', value: 100 },
-                { time: '03:34', value: 98 },
-                { time: '03:58', value: 105 },
-              ]
-            },
-            hourlyBar: {
-              unit: 'kWh',
-              data: [
-                { hour: '00:00', value: 15 },
-                { hour: '01:00', value: 18 },
-                { hour: '02:00', value: 22 },
-                { hour: '03:00', value: 15 },
-                { hour: '04:00', value: 18 },
-                { hour: '05:00', value: 22 }
-              ]
-            }
-          }
-        };
-        this.data.energy.line.data = this.generateEnergyLineData(100, 5);
-        this.machineStatus = this.data?.status
-        this.getGauge(this.data?.efficiency || 0);
-        this.getProgress(this.data?.energyData || 0);
-        this.getLineChart(this.data?.energy || {});
-        this.getganttChart(this.data?.gantt?.['datas'] || {});
+        this.data = res
+        this.getLineChart(this.data || {});
       },
       error: (error) => {
-        console.error(error),
-          this.data = {
-            operatingTime: "21:15:00",
-            downTime: "02:45:00",
-            alarm: 2,
-            status: 'Running',
-            lut: '6:36:42 PM',
-            energyData: 45,
-            efficiency: 62,
-            gauges: {
-              efficiency: {
-                value: 82,
-                unit: '%'
-              },
-              energyProgress: {
-                value: 45,
-                unit: 'kWh'
-              }
-            },
-
-            gantt: {
-              machine: 'Machine 1',
-              datas: [
-                {
-                  name: 'Off',
-                  fromTo: '06:00:00-06:15:00',
-                  value: [0, 1734049800000, 1734050700000, 900],
-                  itemStyle: { color: '#b0b0b0' },
-                },
-                {
-                  name: 'Idle',
-                  fromTo: '06:15:00-06:40:30',
-                  value: [0, 1734050700000, 1734052230000, 1530],
-                  itemStyle: { color: '#f7c030' },
-                },
-                {
-                  name: 'Running',
-                  fromTo: '06:40:30-07:25:10',
-                  value: [0, 1734052230000, 1734054910000, 2670],
-                  itemStyle: { color: '#548237' },
-                },
-                {
-                  name: 'Idle',
-                  fromTo: '07:25:10-07:35:00',
-                  value: [0, 1734054910000, 1734055500000, 590],
-                  itemStyle: { color: '#f7c030' },
-                },
-                {
-                  name: 'Running',
-                  fromTo: '07:35:00-08:45:20',
-                  value: [0, 1734055500000, 1734059720000, 4220],
-                  itemStyle: { color: '#548237' },
-                },
-                {
-                  name: 'Off',
-                  fromTo: '08:45:20-09:10:00',
-                  value: [0, 1734059720000, 1734061200000, 1480],
-                  itemStyle: { color: '#b0b0b0' },
-                },
-                {
-                  name: 'Running',
-                  fromTo: '09:10:00-10:05:45',
-                  value: [0, 1734061200000, 1734064545000, 3345],
-                  itemStyle: { color: '#548237' },
-                },
-                {
-                  name: 'Idle',
-                  fromTo: '10:05:45-10:30:00',
-                  value: [0, 1734064545000, 1734066000000, 1455],
-                  itemStyle: { color: '#f7c030' },
-                },
-                {
-                  name: 'Running',
-                  fromTo: '10:30:00-11:50:00',
-                  value: [0, 1734066000000, 1734071400000, 5400],
-                  itemStyle: { color: '#548237' },
-                },
-                {
-                  name: 'Off',
-                  fromTo: '11:50:00-12:30:00',
-                  value: [0, 1734071400000, 1734073800000, 2400],
-                  itemStyle: { color: '#b0b0b0' },
-                },
-              ]
-            },
-
-            energy: {
-              line: {
-                unit: 'kWh',
-                data: [
-                  { time: '00:00', value: 100 },
-                  { time: '00:10', value: 98 },
-                  { time: '00:15', value: 105 },
-                  { time: '00:45', value: 100 },
-                  { time: '01:21', value: 98 },
-                  { time: '01:45', value: 105 },
-                  { time: '01:56', value: 100 },
-                  { time: '02:00', value: 98 },
-                  { time: '02:12', value: 105 },
-                  { time: '02:37', value: 100 },
-                  { time: '02:45', value: 98 },
-                  { time: '03:00', value: 105 },
-                  { time: '03:18', value: 100 },
-                  { time: '03:34', value: 98 },
-                  { time: '03:58', value: 105 },
-                ]
-              },
-              hourlyBar: {
-                unit: 'kWh',
-                data: [
-                  { hour: '00:00', value: 15 },
-                  { hour: '01:00', value: 18 },
-                  { hour: '02:00', value: 22 },
-                  { hour: '03:00', value: 15 },
-                  { hour: '04:00', value: 18 },
-                  { hour: '05:00', value: 22 }
-                ]
-              }
-            }
-          };
-        this.data.energy.line.data = this.generateEnergyLineData(100, 5);
-        this.machineStatus = this.data?.status
-        this.getGauge(this.data?.efficiency || 0);
-        this.getProgress(this.data?.energyData || 0);
-        this.getLineChart(this.data?.energy || {});
-        this.getganttChart(this.data?.gantt?.['datas'] || {});
+        console.error(error)
       }
     });
   }
 
   getGauge(data: any) {
+    const value = Number(data ?? 0).toFixed(2);
+    const gaugeValue = Number(value);
     this.gaugeOption = {
       series: [
         {
@@ -428,14 +282,15 @@ export class DashboardComponent implements OnInit {
           title: {
             show: false,
           },
-          data: [{ value: data || 0 }],
+          data: [{ value: gaugeValue || 0 }],
         },
       ],
     };
   }
 
   getProgress(data: any) {
-
+    const value = Number(data ?? 0).toFixed(4);
+    const gaugeValue = Number(value);
     this.progressOption = {
       series: [
         {
@@ -449,13 +304,13 @@ export class DashboardComponent implements OnInit {
           pointer: { length: '70%', width: 4 },
           detail: {
             formatter: '{value} kWh',
-            fontSize: 16,
+            fontSize: 14,
             fontWeight: 'bold',
-            offsetCenter: [0, '80%'],
+            offsetCenter: [0, '100%'],
           },
           splitLine: { show: true, distance: -10 },
           axisLabel: { distance: -16 },
-          data: [{ value: data || 0 }],
+          data: [{ value: gaugeValue || 0 }],
         },
       ],
     };
@@ -521,11 +376,41 @@ export class DashboardComponent implements OnInit {
         text: 'Gantt View',
       },
       tooltip: {
-        formatter: (p: any) => `
-          <b>Status:</b> ${p.data.name}<br/>
-          <b>From-To:</b> ${p.data.fromTo}<br/>
-          <b>Duration:</b> ${p.data.value[3]} sec
-        `,
+        trigger: "item",
+        backgroundColor: "rgba(0, 0, 0, 0.85)",
+        borderColor: "#fff",
+        borderWidth: 1,
+        textStyle: {
+          color: "#fff",
+          fontSize: 14,
+        },
+        padding: 10,
+        extraCssText:
+          "border-radius: 8px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);",
+        formatter: function (params:any) {
+          var data = params.data;
+          var statusColor =
+            data.name === "Running"
+              ? "#77ff5c"
+              : data.name === "Idle"
+                ? "#f9fc4d"
+                : data.name === "Off"
+                  ? "#b0b0b0"
+                  : data.name === "Breakdown"
+                        ? "#eb5857"
+                        : "grey";
+
+          return `
+            <div style="text-align: left; font-family: Arial, sans-serif; line-height: 1.5;">
+              <p style="margin: 5px 0; font-size: 16px;">
+              <strong>Status :</strong>
+              <span style="color: ${statusColor}; font-weight: bold;">${data.name}</span>
+              </p>
+              <p style="margin: 5px 0;"><strong>From-To :</strong> ${data.fromTo}</p>
+              <p style="margin: 5px 0;"><strong>Duration :</strong> ${data.value[3]}</p>
+            </div>
+          `;
+        },
       },
       xAxis: {
         min: startTime,
@@ -565,20 +450,165 @@ export class DashboardComponent implements OnInit {
     };
   }
 
+  // getLineChart(energy: any) {
+
+  //   const lineTime = energy?.timeStamp;
+  //   const lineData = energy?.energy;
+  //   const hasNoData =
+  //     lineTime.length === 0 &&
+  //     lineData.length === 0;
+
+  //   if (hasNoData) {
+  //     this.lineOption = {
+  //       title: {
+  //         text: 'No Data Available',
+  //         left: 'center',
+  //         top: 'middle',
+  //         textStyle: {
+  //           color: '#999',
+  //           fontSize: 16,
+  //           fontWeight: 'bold',
+  //         },
+  //       },
+  //       tooltip: { show: false },
+  //       xAxis: { show: false },
+  //       yAxis: { show: false },
+  //       series: [],
+  //     };
+  //     return;
+  //   }
+  //   console.log(hasNoData)
+
+  //   this.lineOption = {
+  //     toolbox: {
+  //       show: true,
+  //       feature: {
+  //         restore: {},
+  //       },
+  //     },
+  //     title: {
+  //       text: 'Energy',
+  //     },
+  //     dataZoom: [
+  //       {
+  //         start: 90,
+  //         end: 100
+  //       },
+  //     ],
+  //     tooltip: {
+  //       trigger: 'axis',
+  //       axisPointer: {
+  //         type: 'cross',
+  //         crossStyle: {
+  //           color: '#999',
+  //         },
+  //       },
+  //       formatter: function (params: any) {
+  //         let tooltipText = params[0].axisValue + '<br/>';
+  //         params.forEach((item: any) => {
+  //           tooltipText +=
+  //             item.marker + ' ' + item.seriesName + ': ' + item.data + '<br/>';
+  //         });
+  //         return tooltipText;
+  //       },
+  //     },
+
+  //     grid:
+  //     {
+  //       top: 50,
+  //       left: 50,
+  //       right: 30,
+  //     },
+  //     // {
+  //     //   left: 50,
+  //     //   right: 30,
+  //     //   top: '55%',
+  //     //   height: '30%',
+  //     // },
+
+  //     xAxis: [
+  //       {
+  //         type: 'category',
+  //         data: lineTime,
+  //         boundaryGap: false,
+  //         gridIndex: 0,
+  //         axisLine: {
+  //           show: true,
+  //           lineStyle: {
+  //             color: '#000',
+  //             width: 1,
+  //           },
+  //         },
+  //         axisTick: { show: true },
+  //         axisLabel: { show: true },
+  //         splitLine: { show: true },
+  //       },
+
+  //     ],
+
+  //     yAxis: [
+  //       {
+  //         type: 'value',
+  //         name: 'kWh',
+  //         nameLocation: 'middle',
+  //         nameGap: 45,
+  //         gridIndex: 0,
+  //         axisTick: {
+  //           show: false,
+  //         },
+  //         axisLine: {
+  //           show: false,
+  //         },
+  //         splitLine: {
+  //           show: false,
+  //         },
+  //       },
+
+  //     ],
+
+  //     series: [
+  //       {
+  //         name: 'Current',
+  //         type: 'line',
+  //         data: lineData,
+  //         xAxisIndex: 0,
+  //         yAxisIndex: 0,
+  //         symbol: 'none',
+  //         smooth: false,
+  //         sampling: 'lttb',
+  //         itemStyle: {
+  //           color: 'rgb(255, 70, 131)',
+  //         },
+  //         areaStyle: {
+  //           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+  //             {
+  //               offset: 0,
+  //               color: 'rgb(255, 158, 68)',
+  //             },
+  //             {
+  //               offset: 1,
+  //               color: 'rgb(255, 70, 131)',
+  //             },
+  //           ]),
+  //         },
+  //       },
+
+  //     ],
+  //   };
+  // }
+
+  
+
   getLineChart(energy: any) {
 
-    const lineDataArr = energy?.line?.data ?? [];
-    const barDataArr = energy?.hourlyBar?.data ?? [];
+    const lineTime = energy?.timeStamp ?? [];
+    const lineData = energy?.energy ?? [];
+     const hourRanges: string[] = energy?.hours ?? [];
 
-    const lineTime = lineDataArr.map((d: any) => d.time);
-    const lineData = lineDataArr.map((d: any) => d.value);
+    const barTime = energy?.hour;
+    const barData = energy?.hourlyEnergy;
 
-    const barTime = barDataArr.map((d: any) => d.hour);
-    const barData = barDataArr.map((d: any) => d.value);
-
-    const hasNoData =
-      lineDataArr.length === 0 &&
-      barDataArr.length === 0;
+    const hasNoData = lineTime.length === 0 && lineData.length === 0 && barTime.length === 0 && barData.length === 0;
 
     if (hasNoData) {
       this.lineOption = {
@@ -617,22 +647,33 @@ export class DashboardComponent implements OnInit {
         },
       ],
       tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-          type: 'cross',
-          crossStyle: {
-            color: '#999',
-          },
-        },
-        formatter: function (params: any) {
-          let tooltipText = params[0].axisValue + '<br/>';
-          params.forEach((item: any) => {
-            tooltipText +=
-              item.marker + ' ' + item.seriesName + ': ' + item.data + '<br/>';
-          });
-          return tooltipText;
-        },
+      trigger: 'axis',
+      axisPointer: { type: 'cross' },
+
+      formatter: (params: any) => {
+        let text = '';
+
+        params.forEach((p: any) => {
+          // BAR TOOLTIP
+          if (p.seriesType === 'bar') {
+            const range = hourRanges[p.dataIndex]; // "00:00-01:00"
+            text += `
+              <b>Hour:</b> ${range}<br/>
+              ${p.marker} ${p.seriesName}: <b>${p.data} kWh</b><br/>
+            `;
+          }
+
+          // LINE TOOLTIP
+          if (p.seriesType === 'line') {
+            text += `
+              ${p.marker} ${p.seriesName}: <b>${Number(p.data).toFixed(2)} kWh</b><br/>
+            `;
+          }
+        });
+
+        return text;
       },
+    },
 
       grid: [
         {
@@ -649,28 +690,25 @@ export class DashboardComponent implements OnInit {
         },
       ],
       xAxis: [
-        {
-          type: 'category',
-          data: lineTime,
-          boundaryGap: false,
-          gridIndex: 0,
-          axisLine: {
-            show: true,
-            lineStyle: {
-              color: '#000',
-              width: 1,
-            },
-          },
-          axisTick: { show: false },
-          axisLabel: { show: false },
-          splitLine: { show: false },
+             {
+        type: 'category',
+        data: lineTime,
+        boundaryGap: false,
+        gridIndex: 0,
+        axisLabel: { show: false },
+      },
+      {
+        type: 'category',
+        gridIndex: 1,
+
+        // 👇 USE HOURS RANGE AS SOURCE
+        data: hourRanges,
+
+        // 👇 SHOW ONLY START HOUR BELOW BAR
+        axisLabel: {
+          formatter: (value: string) => value.split('-')[0], // "00:00"
         },
-        {
-          type: 'category',
-          data: barTime,
-          boundaryGap: true,
-          gridIndex: 1,
-        },
+      }
       ],
 
       yAxis: [
@@ -710,7 +748,7 @@ export class DashboardComponent implements OnInit {
 
       series: [
         {
-          name: 'Current',
+          name: 'Energy',
           type: 'line',
           data: lineData,
           xAxisIndex: 0,
@@ -776,6 +814,15 @@ export class DashboardComponent implements OnInit {
       backdrop: 'static',
     });
   }
+  alertModel() {
+    if(this.machinealarmStatus.length){
+      this.modalService.open(this.alerttemplate, {
+        centered: true,
+        backdrop: 'static',
+        size: 'lg',
+      });
+    }
+  }
   getBase64Image(url: string): Promise<string> {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -794,114 +841,149 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  formatHoursToTime(hours: number = 0): string {
+    const totalSeconds = Math.round(hours * 3600);
+
+    const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+    const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+    const s = Math.floor(totalSeconds % 60).toString().padStart(2, '0');
+
+    return `${h}:${m}:${s}`;
+  }
+
+  formatFixed(value: any): string {
+    return value !== null && value !== undefined
+      ? Number(value).toFixed(2)
+      : '0.00';
+  }
 
 
   async downloadReport(e: any) {
-    if (e === 'pdf') {
-      const doc = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 10;
-      const contentSpacing = 8;
+   if (e === 'pdf') {
 
-      const now = new Date();
-      const downloadDateTime = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
 
-      const logoBase64 = await this.getBase64Image('/WinLogo.png');
+  const margin = 10;
+  const headerHeight = 25; // IMPORTANT
+  const contentSpacing = 8;
 
-      const drawHeader = (doc: any) => {
-        const y = 5;
+  const now = new Date();
+  const downloadDateTime = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+  const logoBase64 = await this.getBase64Image('/WinLogo.png');
 
-        doc.addImage(logoBase64, 'PNG', margin, y, 30, 15);
+  // ================= HEADER =================
+  const drawHeader = (doc: any) => {
+    const y = 5;
 
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Machine Performance Report', pageWidth / 2, y + 8, { align: 'center' });
+    doc.addImage(logoBase64, 'PNG', margin, y, 30, 15);
 
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Date: ${this.selectedDate}`, pageWidth / 2, y + 14, { align: 'center' });
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Machine Performance Report', pageWidth / 2, y + 8, { align: 'center' });
 
-        doc.setFontSize(9);
-        doc.text(downloadDateTime, pageWidth - margin, y + 5, { align: 'right' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Date: ${this.selectedDate}`, pageWidth / 2, y + 14, { align: 'center' });
 
-        doc.setDrawColor(0);
-        doc.line(margin, y + 18, pageWidth - margin, y + 18);
-      };
+    doc.setFontSize(9);
+    doc.text(downloadDateTime, pageWidth - margin, y + 5, { align: 'right' });
 
+    doc.setDrawColor(0);
+    doc.line(margin, y + 18, pageWidth - margin, y + 18);
+  };
+
+  drawHeader(doc);
+
+  let y = headerHeight + contentSpacing;
+
+  // ================= SUMMARY TABLE =================
+  autoTable(doc, {
+    startY: y,
+    margin: {
+      top: headerHeight,
+      left: margin,
+      right: margin,
+      bottom: margin,
+    },
+    head: [['Parameter', 'Value']],
+    body: [
+      ['Operating Time', this.formatHoursToTime(this.ganttdata?.status?.operatingTime)],
+      ['Down Time', this.formatHoursToTime(this.ganttdata?.status?.downTime)],
+      ['Efficiency', `${this.formatFixed(this.ganttdata?.status?.efficiency)} %`],
+      ['Availability', `${this.formatFixed(this.ganttdata?.status?.availability)} %`],
+      ['Performance', `${this.formatFixed(this.ganttdata?.status?.performance)} %`],
+      ['Quality', `${this.formatFixed(this.ganttdata?.status?.quality)} %`],
+      ['Energy', `${this.formatFixed(this.ganttdata?.status?.energyData)} kWh`],
+      ['Alarm', this.ganttdata?.status?.alertsCount ?? 0],
+    ],
+    headStyles: { fillColor: [0, 125, 121], textColor: 255 },
+    bodyStyles: { fontSize: 10 },
+    showHead: 'everyPage',
+    didDrawPage: () => drawHeader(doc),
+  });
+
+  y = (doc as any).lastAutoTable.finalY + contentSpacing;
+
+  // ================= GANTT IMAGE =================
+  const ganttImg = this.ganttOptionchartInstance?.getDataURL({ pixelRatio: 2 });
+  if (ganttImg) {
+    if (y + 40 > pageHeight - margin) {
+      doc.addPage();
       drawHeader(doc);
+      y = headerHeight + contentSpacing;
+    }
 
-      let y = 25;
+    doc.setFontSize(12);
+    doc.text('Machine Timeline', margin, y);
+    doc.addImage(ganttImg, 'PNG', margin, y + 5, pageWidth - 2 * margin, 30);
+    y += 40;
+  }
 
-      autoTable(doc, {
-        startY: y,
-        margin: { left: margin, right: margin },
-        tableWidth: pageWidth - 2 * margin,
-        head: [['Parameter', 'Value']],
-        body: [
-          ['Status', this.data.status],
-          ['Operating Time', this.data.operatingTime],
-          ['Down Time', this.data.downTime],
-          ['Efficiency', this.data.efficiency + '%'],
-          ['Energy', this.data.energyData + ' kWh'],
-        ],
-        headStyles: { fillColor: [0, 125, 121], textColor: 255 },
-        bodyStyles: { fontSize: 10 },
-        didDrawPage: () => drawHeader(doc),
-      });
+  // ================= ENERGY TREND =================
+  const lineImg = this.lineOptionchartInstance?.getDataURL({ pixelRatio: 2 });
+  if (lineImg) {
+    if (y + 65 > pageHeight - margin) {
+      doc.addPage();
+      drawHeader(doc);
+      y = headerHeight + contentSpacing;
+    }
 
-      y = (doc as any).lastAutoTable.finalY + contentSpacing;
+    doc.setFontSize(12);
+    doc.text('Energy Trend', margin, y);
+    doc.addImage(lineImg, 'PNG', margin, y + 5, pageWidth - 2 * margin, 55);
+    y += 65;
+  }
 
-      const ganttImg = this.ganttOptionchartInstance?.getDataURL({ pixelRatio: 2 });
-      if (ganttImg) {
-        const ganttHeight = 30;
-        if (y + ganttHeight + 10 > pageHeight - margin) {
-          doc.addPage();
-          drawHeader(doc);
-          y = 25;
-        }
-        doc.setFontSize(12);
-        doc.text('Machine Timeline', margin, y);
-        doc.addImage(ganttImg, 'PNG', margin, y + 5, pageWidth - 2 * margin, ganttHeight);
-        y += ganttHeight + 10;
-      }
+  // ================= HOURLY TABLE =================
+  const hourlyTableBody = (this.data?.hours || []).map(
+    (hour: string, index: number) => [
+      hour,
+      `${this.formatFixed(this.data?.hourlyEnergy?.[index])} kWh`
+    ]
+  );
 
-      const lineImg = this.lineOptionchartInstance?.getDataURL({ pixelRatio: 2 });
-      if (lineImg) {
-        if (y + 60 > pageHeight - margin) {
-          doc.addPage();
-          drawHeader(doc);
-          y = 25;
-        }
-        doc.setFontSize(12);
-        doc.text('Energy Trend', margin, y);
-        doc.addImage(lineImg, 'PNG', margin, y + 5, pageWidth - 2 * margin, 55);
-        y += 65;
-      }
-      const hourlyData = this.data.energy.hourlyBar.data.map((d: any) => [
-        d.hour,
-        `${d.value} ${this.data.energy.hourlyBar.unit}`,
-      ]);
+  autoTable(doc, {
+    startY: y,
+    margin: {
+      top: headerHeight,
+      left: margin,
+      right: margin,
+      bottom: margin,
+    },
+    head: [['Hour', 'Energy Consumption']],
+    body: hourlyTableBody,
+    headStyles: { fillColor: [0, 125, 121], textColor: 255 },
+    bodyStyles: { fontSize: 10 },
+    showHead: 'everyPage',
+    didDrawPage: () => drawHeader(doc),
+  });
 
-      if (y + 20 > pageHeight - margin) {
-        doc.addPage();
-        drawHeader(doc);
-        y = 25;
-      }
+  doc.save(`Machine_Report_${this.selectedDate}.pdf`);
+}
+else if (e === 'excel') {
 
-      autoTable(doc, {
-        startY: y,
-        margin: { left: margin, right: margin },
-        tableWidth: pageWidth - 2 * margin,
-        head: [['Hour', 'Energy Consumption']],
-        body: hourlyData,
-        headStyles: { fillColor: [0, 125, 121], textColor: 255 },
-        bodyStyles: { fontSize: 10 },
-        didDrawPage: () => drawHeader(doc),
-      });
-
-      doc.save(`Machine_Report_${this.selectedDate}.pdf`);
-    } else if (e === 'excel') {
       const workbook = new ExcelJS.Workbook();
       const sheet = workbook.addWorksheet('Machine Performance');
 
@@ -920,11 +1002,11 @@ export class DashboardComponent implements OnInit {
 
       let rowIndex = 1;
 
+      // ===== TITLE =====
       sheet.mergeCells(`A${rowIndex}:B${rowIndex}`);
-      const titleCell = sheet.getCell(`A${rowIndex}`);
-      titleCell.value = 'Machine Performance Report';
-      titleCell.font = { size: 16, bold: true };
-      titleCell.alignment = { horizontal: 'center' };
+      sheet.getCell(`A${rowIndex}`).value = 'Machine Performance Report';
+      sheet.getCell(`A${rowIndex}`).font = { size: 16, bold: true };
+      sheet.getCell(`A${rowIndex}`).alignment = { horizontal: 'center' };
       rowIndex++;
 
       sheet.mergeCells(`A${rowIndex}:B${rowIndex}`);
@@ -937,78 +1019,69 @@ export class DashboardComponent implements OnInit {
       sheet.getCell(`A${rowIndex}`).alignment = { horizontal: 'center' };
       rowIndex += 2;
 
-      sheet.mergeCells(`A${rowIndex}:B${rowIndex}`);
-      const summaryHeading = sheet.getCell(`A${rowIndex}`);
-      summaryHeading.value = 'Summary Table';
-      summaryHeading.font = { size: 12, bold: true };
-      summaryHeading.alignment = { horizontal: 'center' };
-      rowIndex++;
-
+      // ===== SUMMARY HEADER =====
       sheet.getRow(rowIndex).values = ['Parameter', 'Value'];
-      sheet.getRow(rowIndex).eachCell((cell: any) => {
-        cell.fill = headerFill;
-        cell.font = headerFont;
-        cell.border = borderAll;
-        cell.alignment = { horizontal: 'center' };
+      sheet.getRow(rowIndex).eachCell((c: any) => {
+        c.fill = headerFill;
+        c.font = headerFont;
+        c.border = borderAll;
+        c.alignment = { horizontal: 'center' };
       });
       rowIndex++;
 
-      const summaryData = [
-        ['Status', this.data.status],
-        ['Operating Time', this.data.operatingTime],
-        ['Down Time', this.data.downTime],
-        ['Efficiency', this.data.efficiency + '%'],
-        ['Energy', this.data.energyData + ' kWh'],
-      ];
-
-      summaryData.forEach((row) => {
+      // ===== SUMMARY DATA =====
+      [
+        ['Operating Time', this.formatHoursToTime(this.ganttdata?.status?.operatingTime)],
+        ['Down Time', this.formatHoursToTime(this.ganttdata?.status?.downTime)],
+        ['Efficiency', `${this.formatFixed(this.ganttdata?.status?.efficiency)} %`],
+        ['Availability', `${this.formatFixed(this.ganttdata?.status?.availability)} %`],
+        ['Performance', `${this.formatFixed(this.ganttdata?.status?.performance)} %`],
+        ['Quality', `${this.formatFixed(this.ganttdata?.status?.quality)} %`],
+        ['Energy', `${this.formatFixed(this.ganttdata?.status?.energyData)} kWh`],
+        ['Alarm', this.ganttdata?.status?.alertsCount ?? 0],
+      ].forEach(row => {
         sheet.addRow(row);
-        sheet.getRow(rowIndex).eachCell((cell: any) => {
-          cell.border = borderAll;
-          cell.alignment = { horizontal: 'center' };
+        sheet.getRow(rowIndex).eachCell((c: any) => {
+          c.border = borderAll;
+          c.alignment = { horizontal: 'center' };
         });
         rowIndex++;
       });
 
       rowIndex += 2;
 
-      sheet.mergeCells(`A${rowIndex}:B${rowIndex}`);
-      const hourlyHeading = sheet.getCell(`A${rowIndex}`);
-      hourlyHeading.value = 'Hourly Energy Table';
-      hourlyHeading.font = { size: 12, bold: true };
-      hourlyHeading.alignment = { horizontal: 'center' };
-      rowIndex++;
-
+      // ===== HOURLY HEADER =====
       sheet.getRow(rowIndex).values = ['Hour', 'Energy Consumption'];
-      sheet.getRow(rowIndex).eachCell((cell: any) => {
-        cell.fill = headerFill;
-        cell.font = headerFont;
-        cell.border = borderAll;
-        cell.alignment = { horizontal: 'center' };
+      sheet.getRow(rowIndex).eachCell((c: any) => {
+        c.fill = headerFill;
+        c.font = headerFont;
+        c.border = borderAll;
+        c.alignment = { horizontal: 'center' };
       });
       rowIndex++;
 
-      const hourlyData = this.data.energy.hourlyBar.data.map((d: any) => [
-        d.hour,
-        `${d.value} ${this.data.energy.hourlyBar.unit}`,
-      ]);
+      // ===== HOURLY DATA =====
+      (this.data?.hours || []).forEach((hour: string, i: number) => {
+        sheet.addRow([
+          hour,
+          `${this.formatFixed(this.data?.hourlyEnergy?.[i])} kWh`
+        ]);
 
-      hourlyData.forEach((row: any) => {
-        sheet.addRow(row);
-        sheet.getRow(rowIndex).eachCell((cell: any) => {
-          cell.border = borderAll;
-          cell.alignment = { horizontal: 'center' };
+        sheet.getRow(rowIndex).eachCell((c: any) => {
+          c.border = borderAll;
+          c.alignment = { horizontal: 'center' };
         });
+
         rowIndex++;
       });
 
-      sheet.columns = [
-        { key: 'A', width: 25 },
-        { key: 'B', width: 25 },
-      ];
 
-      workbook.xlsx.writeBuffer().then((buffer) => {
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      sheet.columns = [{ width: 25 }, { width: 25 }];
+
+      workbook.xlsx.writeBuffer().then(buffer => {
+        const blob = new Blob([buffer], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
         saveAs(blob, `Machine_Report_${this.selectedDate}.xlsx`);
       });
     }
@@ -1017,5 +1090,18 @@ export class DashboardComponent implements OnInit {
 
 
 
+  ngOnDestroy() {
+    this.destroyed = true;
+    if (this.ws) {
+      this.ws.close();
+    }
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+    }
+    if (this.deviceIntervalSub) {
+      this.deviceIntervalSub.unsubscribe();
+    }
+
+  }
 
 }

@@ -1,103 +1,191 @@
 <div class="container-fluid py-3">
-<div class="row align-items-stretch">
-  <div class="col-md-12">
-    <div class="card shadow-sm border-0 rounded-1">
-      <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
+  <div class="row align-items-stretch">
+    <div class="col-md-12">
+      <div class="card shadow-sm border-0 rounded-1">
+        <div
+          class="card-body d-flex justify-content-between align-items-center flex-wrap"
+        >
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <label for="machineSelect" class="fw-bold mb-0">Machine:</label>
+            <select
+              id="machineSelect"
+              [(ngModel)]="selectedMachine"
+              (change)="changeDevice($event)"
+              class="form-select form-select-sm"
+            >
+              <option
+                *ngFor="let machine of machines"
+                [value]="machine.deviceId"
+              >
+                {{ machine.deviceName }}
+              </option>
+            </select>
+          </div>
 
-        <div class="d-flex align-items-center gap-2 mb-2">
-          <label for="machineSelect" class="fw-bold mb-0">Machine:</label>
-          <select id="machineSelect" [(ngModel)]="selectedMachine" (change)="changeDevice($event)" class="form-select form-select-sm">
-            <option *ngFor="let machine of machines" [value]="machine.deviceId">{{ machine.machineName }}</option>
-          </select>
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="fw-bold mb-0">Status:</span>
+            <span
+              class="badge status-badge"
+              [ngClass]="{
+                'text-bg-success': machineStatus === 'Running',
+                'text-bg-warning': machineStatus === 'Idle',
+                'text-bg-primary': machineStatus === 'Off',
+              }"
+              >{{ machineStatus }}</span
+            >
+          </div>
+
+          <div class="d-flex align-items-center gap-1 mb-2">
+            <button
+              class="btn btn-primary btn-sm arrow-btn"
+              (click)="changeDate(-1)"
+            >
+              <mat-icon class="small-arrow">arrow_back</mat-icon>
+            </button>
+
+            <input
+              type="date"
+              [(ngModel)]="selectedDate"
+              (change)="changemmainDate($event)"
+              [max]="today"
+              class="form-control form-control-sm text-center"
+            />
+
+            <button
+              class="btn btn-primary btn-sm arrow-btn"
+              [disabled]="isCurrent"
+              (click)="changeDate(1)"
+            >
+              <mat-icon class="small-arrow">arrow_forward</mat-icon>
+            </button>
+
+            <button
+              *ngIf="!isCurrent"
+              (click)="openModel()"
+              class="btn btn-sm btn-warning arrow-btn"
+            >
+              <mat-icon class="small-download">download</mat-icon>
+            </button>
+          </div>
+
+          <div class="text-muted small fw-bold mb-2">
+            Last Updated:
+            <span>{{
+              ganttdata?.status?.LTU | date: "dd-MM-yyyy HH:mm:ss"
+            }}</span>
+          </div>
         </div>
-
-        <div class="d-flex align-items-center gap-2 mb-2">
-          <span class="fw-bold mb-0">Status:</span>
-          <span class="badge status-badge" [ngClass]="{
-              'text-bg-success': machineStatus === 'Running',
-              'text-bg-warning': machineStatus === 'Idle',
-              'text-bg-primary': machineStatus === 'Off'
-            }">{{ machineStatus }}</span>
-        </div>
-
-        <div class="d-flex align-items-center gap-1 mb-2">
-          <button class="btn btn-primary btn-sm arrow-btn" (click)="changeDate(-1)">
-            <mat-icon class="small-arrow">arrow_back</mat-icon>
-          </button>
-
-          <input type="date" [(ngModel)]="selectedDate" (change)="changemmainDate($event)" [max]="today" class="form-control form-control-sm text-center" />
-
-          <button class="btn btn-primary btn-sm arrow-btn" [disabled]="isCurrent" (click)="changeDate(1)">
-            <mat-icon class="small-arrow">arrow_forward</mat-icon>
-          </button>
-        
-            <button *ngIf="!isCurrent" (click)="openModel()" class="btn btn-sm btn-warning arrow-btn">
-            <mat-icon class="small-download">download</mat-icon>
-          </button>
-        </div>
-
-        <div class="text-muted small fw-bold mb-2">
-          Last Updated: <span>{{data?.lut}}</span>
-        </div>
-
       </div>
     </div>
   </div>
-</div>
-
 
   <div class="row mt-1 g-3 align-items-stretch">
-    <div class="col-md-3">
-      <div class="card shadow-sm border-0 rounded-1" style="height: 240px">
-        <div class="card-body d-flex flex-column justify-content-center">
-          <div class="d-flex align-items-center mb-2 justify-content-center gap-2">
-            <h6 class="fw-bold mb-0">Efficiency</h6>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 rounded-1 p-2" style="height: 240px">
+        <div class="d-flex h-100 gap-2 mt-2">
+          <div
+            class="d-flex align-items-center justify-content-center"
+            style="width: 50%"
+          >
+            <div
+              echarts
+              [options]="gaugeOption"
+              (chartInit)="gaugeOptionChartInit($event)"
+              style="height: 200px; width: 100%"
+            ></div>
           </div>
-          <div echarts [options]="gaugeOption" (chartInit)="gaugeOptionChartInit($event)" style="height: 160px; width: 100%"></div>
+
+          <div class="d-flex flex-column gap-2" style="width: 50%">
+            <div
+              class="metric-card rounded text-black px-2 py-1"
+              style="background-color: #f8a9a9"
+            >
+              <h6 class="mb-1">Availability</h6>
+              <h4 class="mb-0">{{ avail ?? 0 }}%</h4>
+            </div>
+
+            <div
+              class="metric-card rounded text-black px-2 py-1"
+              style="background-color: #9ef6ad"
+            >
+              <h6 class="mb-1">Performance</h6>
+              <h4 class="mb-0">{{ performance ?? 0 }}%</h4>
+            </div>
+
+            <div
+              class="metric-card rounded text-black px-2 py-1"
+              style="background-color: #9cbdfc"
+            >
+              <h6 class="mb-1">Quality</h6>
+              <h4 class="mb-0">{{ quality ?? 0 }}%</h4>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="col-md-6">
+    <div class="col-md-8">
       <div class="card shadow-sm border-0 rounded-1" style="height: 240px">
         <div class="card-body d-flex flex-column">
           <div class="d-flex gap-2 mb-2">
             <div class="flex-fill bg-light rounded-3 p-2 text-center border">
-              <div class="d-flex align-items-center justify-content-center gap-1">
-                <mat-icon class="text-success" style="font-size: 20px">access_time</mat-icon>
-                <span class="text-muted fw-bold small mb-0">Operating Time</span>
+              <div
+                class="d-flex align-items-center justify-content-center gap-1"
+              >
+                <mat-icon class="text-success" style="font-size: 20px"
+                  >access_time</mat-icon
+                >
+                <span class="text-muted fw-bold small mb-0"
+                  >Operating Time</span
+                >
               </div>
-              <div class="fs-6 fw-semibold text-success mt-1">{{data?.operatingTime}} hrs</div>
+              <div class="fs-6 fw-semibold text-success mt-1">
+                {{ ganttdata?.status?.operatingTime | dateHoursToTimePipe }} hrs
+              </div>
             </div>
             <div class="flex-fill bg-light rounded-3 p-2 text-center border">
-              <div class="d-flex align-items-center justify-content-center gap-1">
-                <mat-icon class="text-danger" style="font-size: 20px">warning</mat-icon>
+              <div
+                class="d-flex align-items-center justify-content-center gap-1"
+              >
+                <mat-icon class="text-danger" style="font-size: 20px"
+                  >warning</mat-icon
+                >
                 <span class="text-muted fw-bold small mb-0">Downtime</span>
               </div>
-              <div class="fs-6 fw-semibold text-danger mt-1">{{data?.downTime}} hrs</div>
+              <div class="fs-6 fw-semibold text-danger mt-1">
+                {{ ganttdata?.status?.downTime | dateHoursToTimePipe }} hrs
+              </div>
             </div>
             <div class="flex-fill bg-light rounded-3 p-2 text-center border">
-              <div class="d-flex align-items-center justify-content-center gap-1">
-                <mat-icon class="text-warning" style="font-size: 20px">notifications</mat-icon>
-                <span class="text-muted fw-bold small mb-0">Alarms</span>
+              <div
+                class="d-flex align-items-center justify-content-center gap-1"
+                [class.cursor-pointer]="ganttdata?.status?.alerts?.length > 0"
+                (click)="alertModel()"
+              >
+                <mat-icon
+                  class="text-warning"
+                  style="font-size: 20px"
+                  [class.opacity-50]="!ganttdata?.status?.alerts?.length"
+                >
+                  notifications
+                </mat-icon>
+
+                <span class="text-muted fw-bold small mb-0"> Alarms </span>
               </div>
-              <div class="fs-6 fw-semibold text-warning mt-1">{{data?.alarm}}</div>
+
+              <div class="fs-6 fw-semibold text-warning mt-1">
+                {{ mqttdata || 0 }}
+              </div>
             </div>
           </div>
           <div class="flex-grow-1">
-            <div echarts [options]="ganttOption"  (chartInit)="ganttOptionChartInit($event)" style="height: 120px; width: 100%"></div>
+            <div
+              echarts
+              [options]="ganttOption"
+              (chartInit)="ganttOptionChartInit($event)"
+              style="height: 120px; width: 100%"
+            ></div>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-md-3">
-      <div class="card shadow-sm border-0 rounded-1" style="height: 240px">
-        <div class="card-body d-flex flex-column justify-content-center">
-          <div class="d-flex align-items-center mb-2 justify-content-center gap-2">
-            <h6 class="fw-bold mb-0">Energy</h6>
-          </div>
-          <div echarts [options]="progressOption" (chartInit)="progressOptionChartInit($event)" style="height: 160px; width: 100%"></div>
         </div>
       </div>
     </div>
@@ -106,8 +194,13 @@
     <div class="col-md-12">
       <div class="card shadow-sm border-0 rounded-3" style="height: 350px">
         <div class="card-body d-flex flex-column">
-           <div class="flex-grow-1">
-            <div echarts [options]="lineOption" (chartInit)="lineOptionChartInit($event)" style="height: 350px; width: 100%"></div>
+          <div class="flex-grow-1">
+            <div
+              echarts
+              [options]="lineOption"
+              (chartInit)="lineOptionChartInit($event)"
+              style="height: 350px; width: 100%"
+            ></div>
           </div>
         </div>
       </div>
@@ -116,25 +209,74 @@
 </div>
 
 <ng-template #downloadtemplate let-modal>
-  <div class="model-header d-flex justify-content-between align-items-center p-3">
+  <div
+    class="model-header d-flex justify-content-between align-items-center p-3"
+  >
     <h5 class="modal-title">Export Report</h5>
     <button
       type="button"
       class="btn-close"
       aria-label="Close"
       (click)="modal.close()"
-    >
-    </button> 
+    ></button>
   </div>
   <div class="modal-body">
     <div class="form-group d-flex justify-content-between">
       <div>
-        <button class="btn btn-success" type="button" (click)="downloadReport('pdf')">PDF</button>
+        <button
+          class="btn btn-success"
+          type="button"
+          (click)="downloadReport('pdf')"
+        >
+          PDF
+        </button>
         &nbsp;
-        <button class="btn btn-primary" type="button" (click)="downloadReport('excel')">EXCEL</button>
+        <button
+          class="btn btn-primary"
+          type="button"
+          (click)="downloadReport('excel')"
+        >
+          EXCEL
+        </button>
       </div>
 
-      <button class="btn btn-danger" type="button" (click)="modal.close()">Cancel</button>
+      <button class="btn btn-danger" type="button" (click)="modal.close()">
+        Cancel
+      </button>
     </div>
+  </div>
+</ng-template>
+<ng-template #alerttemplate let-modal>
+  <div
+    class="model-header d-flex justify-content-between align-items-center p-3"
+  >
+    <h5 class="modal-title">Alarm Details : {{ machinealarmStatus.length }}</h5>
+    <button
+      type="button"
+      class="btn-close"
+      aria-label="Close"
+      (click)="modal.close()"
+    ></button>
+  </div>
+  <div class="modal-body">
+    <table class="table table-striped table-bordered table-sm">
+      <thead class="table-light">
+        <tr>
+          <th>Start Time</th>
+          <th>End Time</th>
+          <th>Duration</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let val of machinealarmStatus">
+          <td> {{ val.value[1] | date: "dd-MM-yyyy HH:mm:ss" }} </td>
+          <td> {{ val.value[2] | date: "dd-MM-yyyy HH:mm:ss" }} </td>
+          <td>   {{ val.value[3]?.split('.')[0] }}</td>
+          <td> {{ val.name }} </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </ng-template>
