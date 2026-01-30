@@ -1,7 +1,13 @@
 <div class="login-wrapper">
   <div class="login-card">
-    <h2>Welcome Back 👋</h2>
-    <p class="subtitle">Login to continue</p>
+    <div class="d-flex justify-content-center align-items-center mb-2">
+
+      <img src="WinLogo.png"
+          style="cursor: pointer;" 
+          alt="Company Logo" 
+          class="company-logo me-3"  
+         />
+    </div>
 
     <form (ngSubmit)="saveData()" [formGroup]="loginForm">
 

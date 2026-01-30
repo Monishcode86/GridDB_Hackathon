@@ -454,13 +454,35 @@ export class DashboardComponent implements OnInit {
 
     const lineTime = energy?.timeStamp ?? [];
     const lineData = energy?.energy ?? [];
+    const partData = energy?.partCount ?? [];
+    const markPoints = partData
+      .map((val: number, index: number) => {
+        if (val === 1) {
+          return {
+            name: 'Part Produced',
+            coord: [lineTime[index], lineData[index]], // position uses energy
+            value: val, // 🔥 this is partCount (shown in label)
+            tooltip: {
+              formatter: `
+            <b>Part Produced</b><br/>
+            Time: ${lineTime[index]}<br/>
+            Energy: ${Number(lineData[index]).toFixed(2)} kWh<br/>
+            Part Count: ${val}
+          `,
+            },
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+
     const hourRanges: string[] = energy?.hours ?? [];
 
-    const barTime = energy?.hour;
     const barData = energy?.hourlyEnergy;
 
-    const hasNoData = lineTime.length === 0 && lineData.length === 0 && barTime.length === 0 && barData.length === 0;
-
+    const hasNoData = lineTime?.length === 0 && lineData?.length === 0 && hourRanges?.length === 0 && barData?.length === 0;
+      
     if (hasNoData) {
       this.lineOption = {
         title: {
@@ -600,6 +622,25 @@ export class DashboardComponent implements OnInit {
           symbol: 'none',
           smooth: true,
           sampling: 'lttb',
+          markPoint: {
+            symbolSize: 40,        // 🔥 bigger marker
+            itemStyle: {
+              color: '#1dc38c',
+              borderColor: '#fff',
+              borderWidth: 2,
+            },
+
+            label: {
+              show: true,
+              formatter: (params: any) => {
+                return `${params.value}`;   // 👈 Part count label
+              },
+              fontSize: 11,
+              fontWeight: 'bold',
+            },
+            data: markPoints,
+          },
+
           itemStyle: {
             color: 'rgb(255, 70, 131)',
           },
