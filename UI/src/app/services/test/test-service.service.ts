@@ -26,12 +26,10 @@ export class SignalRService {
       .build();
  
     this.hubConnection.on('deviceStatus', (data) => {
-      console.log('SignalR data:', data);
       this.deviceStatus$.next(data);
     });
  
     await this.hubConnection.start();
-    console.log('SignalR connected');
   }
  
   disconnect() {

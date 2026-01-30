@@ -115,7 +115,6 @@ export class EnergyDashboardComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (res: any) => {
           this.reportData = res;
-          console.log('API DATA', res);
           this.getProgress(this.reportData?.['TotalEnergy'] || 0);
           this.getRealProgress(this.reportData?.['TotalReal_power'] || 0);
           this.getApparentProgress(

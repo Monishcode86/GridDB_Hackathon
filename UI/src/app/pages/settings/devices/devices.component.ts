@@ -80,7 +80,6 @@ export class DevicesComponent implements OnInit {
       return
     }
     this.devId = this.deviceForm.get('deviceId')?.value
-    console.log(this.deviceForm.get('deviceId')?.value, this.deviceForm.value)
     if (this.action == 'Add') {
       this.dataservice.post('/device', this.deviceForm.value).subscribe({
         next: ((res: any) => {
@@ -91,10 +90,8 @@ export class DevicesComponent implements OnInit {
         error: ((error: any) => {
         })
       })
-      console.log(this.deviceForm.value);
     } else {
       this.deviceForm.get('deviceId')?.enable();
-      console.log(this.deviceForm.value);
       this.dataservice.put('/device', this.deviceForm.value).subscribe({
         next: ((res: any) => {
           this.getDeviceData();
@@ -120,7 +117,6 @@ export class DevicesComponent implements OnInit {
   }
 
   editDevice(item: any) {
-    console.log(item)
     this.action = 'Edit'
     this.modalService.open(this.deviceTemplate, {
       centered: true,
@@ -154,7 +150,6 @@ export class DevicesComponent implements OnInit {
   }
 
   deleteDevice() {
-    console.log(this._id)
     this.dataservice.delete(`/device?deviceId=${this._id}`).subscribe({
       next: ((res: any) => {
         this.getDeviceData();
@@ -171,7 +166,6 @@ export class DevicesComponent implements OnInit {
     let obj = {
       deviceId: this._id
     }
-    console.log(this._id, obj)
     this.dataservice.delete(`/certificate?deviceId=${this._id}`).subscribe({
       next: ((res: any) => {
 

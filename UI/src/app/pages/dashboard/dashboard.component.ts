@@ -58,7 +58,7 @@ export class DashboardComponent implements OnInit {
   progressOption: any;
   lineOption: any;
   ganttOption: any;
-  data: any = {};
+  metricdata: any = {};
   today: string = new Date().toISOString().split('T')[0];
   isCurrent: boolean = true;
   mqttdata: any;
@@ -73,7 +73,6 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit() {
     this.getDevice()
-    // this.connectWebSocket();
 
   }
   getDevice() {
@@ -87,7 +86,7 @@ export class DashboardComponent implements OnInit {
         if (this.deviceIntervalSub) {
           this.deviceIntervalSub.unsubscribe();
         }
-        this.deviceIntervalSub = interval(60000).subscribe(() => {
+        this.deviceIntervalSub = interval(30000).subscribe(() => {
           this.getData();
           this.getganttData();
 
@@ -121,55 +120,6 @@ export class DashboardComponent implements OnInit {
       }
     });
   }
-  // connectWebSocket() {
-  //   this.ws = new WebSocket('wss://data-stream.binance.vision/ws/btcusdt@trade');
-
-  //   this.ws.onopen = () => {
-  //     console.log('WebSocket connected');
-  //   };
-
-  //   this.ws.onmessage = (msg) => {
-  //     // console.log('WebSocket message received:------------------------------------>', msg.data);
-  //     let message: any;
-
-  //     try {
-  //       message = JSON.parse(msg.data);
-  //     } catch {
-  //       message = msg.data;
-  //     }
-
-  //     this.handleRealtimeData(message);
-  //   };
-
-  //   this.ws.onerror = (err) => {
-  //     console.error('WebSocket error:', err);
-  //     this.reconnect();
-  //   };
-
-  //   this.ws.onclose = () => {
-  //     console.warn('WebSocket closed, reconnecting...');
-  //     this.reconnect();
-  //   };
-  // }
-
-  // reconnect() {
-  //   if (this.destroyed) return;
-  //   if (this.reconnectTimeout) {
-  //     clearTimeout(this.reconnectTimeout);
-  //   }
-
-  //   this.reconnectTimeout = setTimeout(() => {
-  //     console.log('Reconnecting WebSocket...');
-  //     this.connectWebSocket();
-  //   }, 5000);
-  // }
-
-  // handleRealtimeData(message: any) {
-  //   if (typeof message === 'object') {
-
-  //     this.mqttdata = Number(message.p).toFixed(2);
-  //   }
-  // }
 
   changeDevice(e: any) {
     this.getData();
@@ -220,12 +170,18 @@ export class DashboardComponent implements OnInit {
 
     return data;
   }
-
+  partCount: any = [];
+  partDta: any;
   getData() {
     this.dataService.get(`/energyMetrics?deviceId=${this.selectedMachine}&date=${this.selectedDate}`).subscribe({
       next: (res: any) => {
-        this.data = res
-        this.getLineChart(this.data || {});
+        this.metricdata = res;
+        this.getLineChart(this.metricdata || {});
+        this.partCount = this.metricdata?.partCount;
+        this.partDta = this.partCount.reduce(
+          (sum: number, val: number) => sum + val,
+          0
+        );
       },
       error: (error) => {
         console.error(error)
@@ -457,11 +413,11 @@ export class DashboardComponent implements OnInit {
     const partData = energy?.partCount ?? [];
     const markPoints = partData
       .map((val: number, index: number) => {
-        if (val === 1) {
+        if (val) {
           return {
             name: 'Part Produced',
-            coord: [lineTime[index], lineData[index]], // position uses energy
-            value: val, // 🔥 this is partCount (shown in label)
+            coord: [lineTime[index], lineData[index]],
+            value: val, 
             tooltip: {
               formatter: `
             <b>Part Produced</b><br/>
@@ -482,7 +438,7 @@ export class DashboardComponent implements OnInit {
     const barData = energy?.hourlyEnergy;
 
     const hasNoData = lineTime?.length === 0 && lineData?.length === 0 && hourRanges?.length === 0 && barData?.length === 0;
-      
+
     if (hasNoData) {
       this.lineOption = {
         title: {
@@ -528,7 +484,7 @@ export class DashboardComponent implements OnInit {
 
           params.forEach((p: any) => {
             if (p.seriesType === 'bar') {
-              const range = hourRanges[p.dataIndex]; // "00:00-01:00"
+              const range = hourRanges[p.dataIndex]; 
               text += `
               <b>Hour:</b> ${range}<br/>
               ${p.marker} ${p.seriesName}: <b>${p.data} kWh</b><br/>
@@ -623,7 +579,7 @@ export class DashboardComponent implements OnInit {
           smooth: true,
           sampling: 'lttb',
           markPoint: {
-            symbolSize: 40,        // 🔥 bigger marker
+            symbolSize: 40,        
             itemStyle: {
               color: '#1dc38c',
               borderColor: '#fff',
@@ -633,7 +589,7 @@ export class DashboardComponent implements OnInit {
             label: {
               show: true,
               formatter: (params: any) => {
-                return `${params.value}`;   // 👈 Part count label
+                return `${params.value}`;  
               },
               fontSize: 11,
               fontWeight: 'bold',
@@ -792,14 +748,15 @@ export class DashboardComponent implements OnInit {
         },
         head: [['Parameter', 'Value']],
         body: [
-          ['Running Time', `${this.ganttdata?.status?.running} hrs`],
-          ['Idle Time', `${this.ganttdata?.status?.idle} hrs`],
-          ['Breakdown Time', `${this.ganttdata?.status?.breakdown} hrs`],
-          ['Off Time', `${this.ganttdata?.status?.off} hrs`],
           ['Efficiency', `${this.formatFixed(this.ganttdata?.status?.efficiency)} %`],
           ['Availability', `${this.formatFixed(this.ganttdata?.status?.availability)} %`],
           ['Performance', `${this.formatFixed(this.ganttdata?.status?.performance)} %`],
           ['Quality', `${this.formatFixed(this.ganttdata?.status?.quality)} %`],
+          ['Running Time', `${this.ganttdata?.status?.running} hrs`],
+          ['Idle Time', `${this.ganttdata?.status?.idle} hrs`],
+          ['Breakdown Time', `${this.ganttdata?.status?.breakdown} hrs`],
+          ['Off Time', `${this.ganttdata?.status?.off} hrs`],
+          ['Part Count', this.partDta || 0],
           ['Energy', `${this.formatFixed(this.ganttdata?.status?.energyData)} kWh`],
           ['Alarm', this.ganttdata?.status?.alertsCount ?? 0],
         ],
@@ -839,10 +796,10 @@ export class DashboardComponent implements OnInit {
         y += 65;
       }
 
-      const hourlyTableBody = (this.data?.hours || []).map(
+      const hourlyTableBody = (this.metricdata?.hours || []).map(
         (hour: string, index: number) => [
           hour,
-          `${this.formatFixed(this.data?.hourlyEnergy?.[index])} kWh`
+          `${this.formatFixed(this.metricdata?.hourlyEnergy?.[index])} kWh`
         ]
       );
 
@@ -910,14 +867,15 @@ export class DashboardComponent implements OnInit {
       rowIndex++;
 
       [
-        ['Running Time', `${this.ganttdata?.status?.running} hrs`],
-        ['Idle Time', `${this.ganttdata?.status?.idle} hrs`],
-        ['Breakdown Time', `${this.ganttdata?.status?.breakdown} hrs`],
-        ['Off Time', `${this.ganttdata?.status?.off} hrs`],
         ['Efficiency', `${this.formatFixed(this.ganttdata?.status?.efficiency)} %`],
         ['Availability', `${this.formatFixed(this.ganttdata?.status?.availability)} %`],
         ['Performance', `${this.formatFixed(this.ganttdata?.status?.performance)} %`],
         ['Quality', `${this.formatFixed(this.ganttdata?.status?.quality)} %`],
+        ['Running Time', `${this.ganttdata?.status?.running} hrs`],
+        ['Idle Time', `${this.ganttdata?.status?.idle} hrs`],
+        ['Breakdown Time', `${this.ganttdata?.status?.breakdown} hrs`],
+        ['Off Time', `${this.ganttdata?.status?.off} hrs`],
+        ['Part Count', this.partDta || 0],
         ['Energy', `${this.formatFixed(this.ganttdata?.status?.energyData)} kWh`],
         ['Alarm', this.ganttdata?.status?.alertsCount ?? 0],
       ].forEach(row => {
@@ -940,10 +898,10 @@ export class DashboardComponent implements OnInit {
       });
       rowIndex++;
 
-      (this.data?.hours || []).forEach((hour: string, i: number) => {
+      (this.metricdata?.hours || []).forEach((hour: string, i: number) => {
         sheet.addRow([
           hour,
-          `${this.formatFixed(this.data?.hourlyEnergy?.[i])} kWh`
+          `${this.formatFixed(this.metricdata?.hourlyEnergy?.[i])} kWh`
         ]);
 
         sheet.getRow(rowIndex).eachCell((c: any) => {

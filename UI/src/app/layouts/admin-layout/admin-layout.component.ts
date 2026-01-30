@@ -69,7 +69,6 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       if (data) {
         this.deviceStatus = data;
         this.showSuccess()
-        console.log(this.deviceStatus)
       }
     });
     this.checkScreenSize();
