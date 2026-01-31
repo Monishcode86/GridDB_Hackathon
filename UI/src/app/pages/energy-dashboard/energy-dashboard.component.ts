@@ -415,6 +415,16 @@ export class EnergyDashboardComponent implements OnInit, OnDestroy {
   getProgress(data: any) {
     const value = Number(data ?? 0).toFixed(2);
     const gaugeValue = Number(value);
+
+        const isKW = gaugeValue >= 1000;
+    const displayValue = isKW ? gaugeValue / 1000 : gaugeValue;
+    const unit = isKW ? 'kWh' : 'Wh';
+
+    let max = 10;
+    if (displayValue > 0) {
+      const magnitude = Math.pow(10, Math.floor(Math.log10(displayValue)));
+      max = Math.ceil(displayValue / magnitude) * magnitude;
+    }
     this.progressOption = {
       series: [
         {
@@ -422,19 +432,21 @@ export class EnergyDashboardComponent implements OnInit, OnDestroy {
           startAngle: 225,
           endAngle: -45,
           min: 0,
-          max: 100,
+          max: max,
           splitNumber: 5,
           radius: '90%',
           pointer: { length: '70%', width: 4 },
           detail: {
-            formatter: '{value} kWh',
+             formatter: (val: number) => {
+              return isKW ? `${val.toFixed(2)} kWh` : `${val.toFixed(0)} Wh`;
+            },
             fontSize: 14,
             fontWeight: 'bold',
             offsetCenter: [0, '105%'],
           },
           splitLine: { show: true, distance: -10 },
           axisLabel: { distance: -16 },
-          data: [{ value: gaugeValue || 0 }],
+          data: [{ value: displayValue || 0 }],
         },
       ],
     };

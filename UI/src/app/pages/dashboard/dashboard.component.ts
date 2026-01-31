@@ -45,7 +45,7 @@ export class DashboardComponent implements OnInit {
   private ws!: WebSocket;
   private reconnectTimeout: any;
   private destroyed = false;
-
+  isReason: boolean = false;
   machines: any[] = [];
   @ViewChild('downloadtemplate') downloadtemplate!: TemplateRef<any>;
   @ViewChild('alerttemplate') alerttemplate!: TemplateRef<any>;
@@ -67,7 +67,7 @@ export class DashboardComponent implements OnInit {
   avail: any;
   performance: any;
   quality: any;
-
+  reasonData: any;
 
   constructor(private modalService: NgbModal, private dataService: DataService) { }
 
@@ -417,7 +417,7 @@ export class DashboardComponent implements OnInit {
           return {
             name: 'Part Produced',
             coord: [lineTime[index], lineData[index]],
-            value: val, 
+            value: val,
             tooltip: {
               formatter: `
             <b>Part Produced</b><br/>
@@ -484,7 +484,7 @@ export class DashboardComponent implements OnInit {
 
           params.forEach((p: any) => {
             if (p.seriesType === 'bar') {
-              const range = hourRanges[p.dataIndex]; 
+              const range = hourRanges[p.dataIndex];
               text += `
               <b>Hour:</b> ${range}<br/>
               ${p.marker} ${p.seriesName}: <b>${p.data} kWh</b><br/>
@@ -579,7 +579,7 @@ export class DashboardComponent implements OnInit {
           smooth: true,
           sampling: 'lttb',
           markPoint: {
-            symbolSize: 40,        
+            symbolSize: 40,
             itemStyle: {
               color: '#1dc38c',
               borderColor: '#fff',
@@ -589,7 +589,7 @@ export class DashboardComponent implements OnInit {
             label: {
               show: true,
               formatter: (params: any) => {
-                return `${params.value}`;  
+                return `${params.value}`;
               },
               fontSize: 11,
               fontWeight: 'bold',
@@ -698,6 +698,13 @@ export class DashboardComponent implements OnInit {
       : '0.00';
   }
 
+  getreason() {
+    this.isReason = true
+  }
+  getreasonData() {
+    this.isReason = false
+
+  }
 
   async downloadReport(e: any) {
     if (e === 'pdf') {
@@ -925,7 +932,23 @@ export class DashboardComponent implements OnInit {
     this.modalService.dismissAll();
   }
 
-
+  getdata(val: any, i: any) {
+    let obj = {
+      "deviceId": this.selectedMachine,
+      "selectedDate": this.selectedDate,
+      "fromTo": val['fromTo'],
+      "name": val['name'],
+      "reason": val['reason']
+    }
+    this.dataService.post(`/downtime`, obj).subscribe({
+      next: (res: any) => {
+        this.getData()
+      },
+      error: (error) => {
+        console.error(error)
+      }
+    });
+  }
 
   ngOnDestroy() {
     this.destroyed = true;
