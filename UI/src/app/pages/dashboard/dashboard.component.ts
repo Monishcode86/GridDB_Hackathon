@@ -86,7 +86,7 @@ export class DashboardComponent implements OnInit {
         if (this.deviceIntervalSub) {
           this.deviceIntervalSub.unsubscribe();
         }
-        this.deviceIntervalSub = interval(30000).subscribe(() => {
+        this.deviceIntervalSub = interval(15000).subscribe(() => {
           this.getData();
           this.getganttData();
 
@@ -364,6 +364,7 @@ export class DashboardComponent implements OnInit {
               </p>
               <p style="margin: 5px 0;"><strong>From-To :</strong> ${data.fromTo}</p>
               <p style="margin: 5px 0;"><strong>Duration :</strong> ${data.value[3]}</p>
+              <p style="margin: 5px 0;"><strong>Reason :</strong> ${data.reason ? data.reason : 'No Reason'}</p>
             </div>
           `;
         },

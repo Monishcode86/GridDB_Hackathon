@@ -299,7 +299,7 @@
           <th>End Time</th>
           <th>Duration</th>
           <th>Status</th>
-          <th>Reason</th>
+          <th>Reason</th> 
         </tr>
       </thead>
 
@@ -310,7 +310,7 @@
           <td>{{ val.value[3]?.split(".")[0] }}</td>
           <td>{{ val.name }}</td>
           <td><select class="form-control" [(ngModel)]="val['reason']" (change)="getdata(val,i)" name="reason{{i}}" id="reason{{i}}">
-            <option value=" " selected disabled>Select Reason</option>
+            <option value="" selected disabled>Select Reason</option>
             <option value="No Power">No Power</option>
             <option value="No Man Power">No Man Power</option>
             <option value="No Internet">No Internet</option>
