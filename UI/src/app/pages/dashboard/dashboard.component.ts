@@ -219,7 +219,7 @@ export class DashboardComponent implements OnInit {
           },
           detail: {
             valueAnimation: true,
-            formatter: '{value}%',
+            formatter: 'OEE {value}%',
             color: 'black',
             fontSize: 16,
             fontWeight: 'bold',
