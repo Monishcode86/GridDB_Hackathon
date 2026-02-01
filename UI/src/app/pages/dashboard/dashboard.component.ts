@@ -935,12 +935,12 @@ export class DashboardComponent implements OnInit {
   getdata(val: any, i: any) {
     let obj = {
       "deviceId": this.selectedMachine,
-      "selectedDate": this.selectedDate,
+      "date": this.selectedDate,
       "fromTo": val['fromTo'],
       "name": val['name'],
       "reason": val['reason']
     }
-    this.dataService.post(`/downtime`, obj).subscribe({
+    this.dataService.post(`/entry`, obj).subscribe({
       next: (res: any) => {
         this.getData()
       },
