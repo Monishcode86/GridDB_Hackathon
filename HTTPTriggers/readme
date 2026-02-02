@@ -1,0 +1,175 @@
+Generate Root CA (Private Key + Certificate)
+
+# Azure IoT Hub – Root CA & Device Certificate Setup
+
+This README explains **end-to-end certificate-based authentication** for **Azure IoT Hub** using a **custom Root Certificate Authority (CA)**.
+
+You will:
+
+* Create a Root CA (private key + certificate)
+* Upload and verify the Root CA in Azure IoT Hub
+* Prove ownership of the CA (verification certificate)
+* Store the Root CA securely in Azure Blob Storage
+
+This setup allows you to **sign device certificates yourself** and authenticate devices using **X.509 CA authentication**.
+
+---
+
+## Prerequisites
+
+* OpenSSL installed
+* Azure IoT Hub created
+* Azure Blob Storage account
+* Azure Portal access
+
+---
+
+## Step 1: Generate Root CA (Private Key + Certificate)
+
+This Root CA will sign all device certificates.
+
+---
+
+### 1️⃣ Generate Root CA Private Key (Encrypted)
+
+```command 
+openssl genrsa -aes256 -out rootCA.key 4096
+```
+
+* Choose a **passphrase**
+* **Keep this key secret**
+
+---
+
+### 2️⃣ Generate Root CA Certificate
+
+```command
+openssl req -x509 -new -nodes \
+  -key rootCA.key \
+  -sha256 \
+  -days 3650 \
+  -out rootCA.cer
+```
+
+When prompted, use values similar to the following:
+
+```text
+Country Name (2 letter code): IN
+State or Province Name: Karnataka
+Locality Name (eg, city): Bangalore
+Organization Name (eg, company): Wimera Systems
+Organizational Unit Name: (press ENTER)
+Common Name: Wimera Root CA
+Email Address: (press ENTER)
+```
+
+🛡️ **Note**
+ Now we have rootCA.key & rootCA.cer
+
+📌 **Important**
+
+* Azure IoT Hub accepts only `.cer` or `.pem`
+* We use `.cer` here
+
+---
+
+### 3️⃣ Verify Root CA Certificate
+
+```command
+openssl x509 -in rootCA.cer -text -noout
+```
+
+Confirm:
+
+```text
+Issuer = Subject = Wimera Root CA
+```
+
+This confirms it is a **self-signed Root CA**.
+
+---
+
+## Step 2: Upload Root CA to Azure IoT Hub
+
+1. Go to **Azure Portal → IoT Hub**
+2. Select **Certificates**
+3. Click **Add**
+4. Upload `rootCA.cer`
+
+* Status will show: Unverified
+
+## Step 3: Generate Verification Certificate (Proof of Possession)
+
+Azure requires proof that you own the **Root CA private key**.
+
+---
+
+### 1️⃣ Generate Verification Private Key
+
+```command
+openssl genrsa -out verification.key 2048
+```
+
+---
+
+### 2️⃣ Generate Verification CSR
+
+In Azure Portal:
+
+* Open your uploaded Root CA
+* Click **Generate verification code**
+
+Example verification code: B6C1E2D3F4A5B6C1E2D3F4A5B6C1E2D3F4A5
+
+Create CSR:
+
+```command
+openssl req -new \
+  -key verification.key \
+  -out verification.csr \
+  -subj "/CN=B6C1E2D3F4A5B6C1E2D3F4A5B6C1E2D3F4A5"
+```
+
+### 3️⃣ Sign Verification Certificate Using Root CA
+
+```command
+openssl x509 -req \
+  -in verification.csr \
+  -CA rootCA.cer \
+  -CAkey rootCA.key \
+  -CAcreateserial \
+  -out verification.cer \
+  -days 365 \
+  -sha256
+```
+
+---
+
+### 4️⃣ Upload Verification Certificate to IoT Hub
+
+* Upload `verification.cer`
+* Certificate status becomes: Verified ✅
+
+🎉 Azure IoT Hub now **trusts your Root CA**.
+
+---
+
+## Step 4: Store Root CA in Azure Blob Storage
+
+Your **Azure Function / backend service** will:
+
+* Read the Root CA from Blob Storage (rootCA.key & rootCA.crt)
+* Generate device certificates (store them too)by sign them using `rootCA.key`
+
+---
+
+## Author
+
+**Wimera Systems**
+
+---
+
+✅ production-ready Root CA setup
+
+
+uvicorn main:app --reload << running command>>

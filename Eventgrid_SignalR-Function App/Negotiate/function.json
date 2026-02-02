@@ -1,0 +1,25 @@
+{
+    "scriptFile": "__init__.py",
+    "bindings": [
+        {
+            "type": "httpTrigger",
+            "direction": "in",
+            "name": "req",
+            "methods": [
+                "get"
+            ],
+            "authLevel": "anonymous"
+        },
+        {
+            "type": "signalRConnectionInfo",
+            "direction": "in",
+            "name": "connectionInfo",
+            "hubName": "telemetry"
+        },
+        {
+            "type": "http",
+            "direction": "out",
+            "name": "$return"
+        }
+    ]
+}

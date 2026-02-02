@@ -1,0 +1,8 @@
+azure-eventhub
+azure-eventhub-checkpointstoreblob-aio
+azure-storage-blob
+
+httpx
+aiohttp
+python-dotenv
+pytz

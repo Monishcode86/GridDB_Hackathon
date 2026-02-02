@@ -1,0 +1,12 @@
+.git*
+.vscode
+__azurite_db*__.json
+__blobstorage__
+__queuestorage__
+__pycache__/**
+**/__pycache__/
+*.pyc
+*.pyo
+local.settings.json
+.venv
+gridschema.sh
