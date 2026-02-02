@@ -24,6 +24,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   menuItems = [
     { label: 'OEE', icon: 'dashboard', route: '/dashboard' },
     { label: 'Energy', icon: 'bolt', route: '/energydashboard' },
+    { label: 'analytics', icon: 'bolt', route: '/analytics' },
     {
       label: 'Settings', icon: 'settings',
       submenu: [
