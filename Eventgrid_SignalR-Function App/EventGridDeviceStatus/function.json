@@ -1,0 +1,16 @@
+{
+    "scriptFile": "__init__.py",
+    "bindings": [
+        {
+            "type": "eventGridTrigger",
+            "direction": "in",
+            "name": "event"
+        },
+        {
+            "type": "signalR",
+            "direction": "out",
+            "name": "signalRMessages",
+            "hubName": "telemetry"
+        }
+    ]
+}

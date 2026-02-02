@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+
+requests
+pytz
+dotenv
+httpx
+
+azure-iot-hub
+azure-storage-blob
+azure-core
+msrest
+
+cryptography
+six

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>SignalR Telemetry</title>
+
+    <!-- SignalR client -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+</head>
+
+<body>
+    <h2>SignalR Device Status</h2>
+    <pre id="output">Waiting for events...</pre>
+
+    <script>
+        async function startSignalR() {
+            // Call Azure Function negotiate endpoint
+            const negotiateResponse = await fetch(
+                "https://gridstatus.azurewebsites.net/api/Negotiate"
+            );
+            const negotiate = await negotiateResponse.json();
+
+            // Create SignalR connection
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl(negotiate.url, {
+                    accessTokenFactory: () => negotiate.accessToken
+                })
+                .withAutomaticReconnect()
+                .build();
+
+            // Listen for messages
+            const messages = [];
+
+            connection.on("deviceStatus", data => {
+                messages.push({
+                    time: new Date().toISOString(),
+                    data
+                });
+
+                document.getElementById("output").textContent =
+                    JSON.stringify(messages, null, 2);
+            });
+
+
+            // Start connection
+            await connection.start();
+            console.log("SignalR connected");
+        }
+
+        startSignalR().catch(err => console.error(err));
+    </script>
+</body>
+
+</html>

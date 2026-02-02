@@ -1,0 +1,19 @@
+# Environment file
+.env
+
+# Python compiled files
+*.pyc
+
+# __pycache__ folders anywhere in the project
+__pycache__/
+**/__pycache__/
+
+# Virtual environment folders
+.venv/
+venv/
+
+# VSCode settings
+.vscode/
+
+# Shell scripts
+*.sh
